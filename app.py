@@ -106,7 +106,7 @@ Rules:
 """
 
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         input=prompt
     )
 
@@ -136,7 +136,7 @@ Answer the user's question clearly and directly based only on the uploaded data 
 """
 
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model="gpt-4.1-mini",
         input=prompt
     )
 
