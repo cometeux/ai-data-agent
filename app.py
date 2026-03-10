@@ -133,7 +133,6 @@ User follow-up question:
 {user_question}
 
 Answer the user's question clearly and directly based only on the uploaded data and existing analysis.
-If the question asks for a comparison or trend, explain it in plain business language.
 """
 
     response = client.responses.create(
@@ -189,14 +188,56 @@ def render_chart(df, chart):
 
 
 # -----------------------------
-# Custom UI
+# Custom UI (ALL TEXT BLACK)
 # -----------------------------
 st.markdown("""
 <style>
-html, body, [class*="css"] {
-    font-family: Inter, system-ui, sans-serif;
+
+/* FORCE ALL TEXT TO BLACK */
+html, body, [class*="css"], p, span, div, label {
+    color: #000000 !important;
 }
 
+/* Streamlit file uploader text */
+[data-testid="stFileUploader"] * {
+    color: #000000 !important;
+}
+
+/* Chat input text */
+[data-testid="stChatInput"] * {
+    color: #000000 !important;
+}
+
+/* Placeholder text */
+::placeholder {
+    color: #444444 !important;
+}
+
+/* Input fields */
+input, textarea {
+    color: #000000 !important;
+}
+
+/* Buttons keep white text */
+div.stButton > button {
+    border-radius: 999px !important;
+    min-height: 52px !important;
+    padding: 0 26px !important;
+
+    background: linear-gradient(135deg, #6c72ff, #5a6cff) !important;
+    color: #ffffff !important;
+
+    border: none !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+
+    box-shadow: 0 6px 18px rgba(90,108,255,0.35) !important;
+}
+div.stButton > button:hover {
+    background: linear-gradient(135deg, #5a6cff, #4f5fff) !important;
+    box-shadow: 0 8px 22px rgba(90,108,255,0.45) !important;
+}
+/* App background */
 .stApp {
     background:
         radial-gradient(circle at bottom left, rgba(194, 228, 255, 0.55), transparent 28%),
@@ -204,18 +245,19 @@ html, body, [class*="css"] {
         linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
 }
 
+/* Layout spacing */
 .block-container {
     max-width: 1250px;
     padding-top: 5rem;
     padding-bottom: 2rem;
 }
 
+/* Header */
 .app-header {
     display: flex;
     align-items: center;
     gap: 14px;
     margin-bottom: 22px;
-    flex-wrap: wrap;
 }
 
 .app-logo {
@@ -228,30 +270,16 @@ html, body, [class*="css"] {
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    font-weight: 700;
-    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
-    flex-shrink: 0;
-}
-
-.app-title-wrap {
-    min-width: 0;
-    flex: 1;
 }
 
 .app-title {
     font-size: 22px;
     font-weight: 700;
-    color: #111827;
-    line-height: 1.2;
-    white-space: normal;
-    word-break: break-word;
 }
 
 .app-subtitle {
-    color: #6b7280;
+    color: #000000;
     font-size: 15px;
-    margin-top: 3px;
-    white-space: normal;
 }
 
 .metric-card {
@@ -259,112 +287,45 @@ html, body, [class*="css"] {
     border-radius: 22px;
     padding: 20px;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-    margin-bottom: 14px;
 }
 
 .metric-number {
     font-size: 30px;
     font-weight: 700;
-    color: #111827;
 }
 
 .metric-label {
     margin-top: 6px;
-    color: #6b7280;
-    font-size: 15px;
 }
 
 .file-card {
     background: rgba(255,255,255,0.95);
     border-radius: 22px;
     padding: 18px 20px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     margin-bottom: 16px;
 }
 
 .file-name {
     font-size: 22px;
     font-weight: 700;
-    color: #111827;
 }
 
 .file-meta {
-    color: #6b7280;
-    margin-top: 5px;
     font-size: 15px;
-}
-
-.section-box {
-    background: rgba(255,255,255,0.9);
-    border: 1px solid rgba(255,255,255,0.65);
-    border-radius: 24px;
-    padding: 22px;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-    margin-bottom: 18px;
-    backdrop-filter: blur(10px);
-}
-
-.section-title {
-    font-size: 26px;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 12px;
-}
-
-.summary-title {
-    font-size: 18px;
-    font-weight: 700;
-    color: #111827;
-    margin-top: 18px;
-    margin-bottom: 8px;
 }
 
 .insight-line {
     padding: 8px 0;
-    color: #374151;
-    border-bottom: 1px solid rgba(0,0,0,0.05);
 }
 
-div[data-testid="stFileUploader"] {
-    background: rgba(255,255,255,0.9);
-    border-radius: 28px;
-    padding: 24px;
-    border: 1px solid rgba(255,255,255,0.65);
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-    margin-bottom: 16px;
-}
-
-div[data-testid="stFileUploader"] section {
-    border: 2px dashed rgba(100,116,139,0.25);
-    border-radius: 22px;
-    padding: 2.8rem 1rem;
-    background: rgba(255,255,255,0.55);
-}
-
-div.stButton > button {
-    border-radius: 999px !important;
-    min-height: 52px !important;
-    padding: 0 22px !important;
-    background: #0f172a !important;
-    color: white !important;
-    border: none !important;
-    font-weight: 600 !important;
-}
-
-[data-testid="stChatMessage"] {
-    background: rgba(255,255,255,0.72);
-    border-radius: 18px;
-    padding: 8px 10px;
-    margin-bottom: 10px;
-}
 </style>
 """, unsafe_allow_html=True)
+
 
 st.markdown("""
 <div class="app-header">
     <div class="app-logo">📊</div>
-    <div class="app-title-wrap">
+    <div>
         <div class="app-title">Data Analysis AI Agent</div>
         <div class="app-subtitle">Upload your data, generate insights, visualize trends, and ask follow-up questions</div>
     </div>
@@ -405,16 +366,19 @@ try:
     )
 
     c1, c2, c3 = st.columns(3)
+
     with c1:
         st.markdown(
             f'<div class="metric-card"><div class="metric-number">{df.shape[0]:,}</div><div class="metric-label">Rows</div></div>',
             unsafe_allow_html=True
         )
+
     with c2:
         st.markdown(
             f'<div class="metric-card"><div class="metric-number">{df.shape[1]}</div><div class="metric-label">Columns</div></div>',
             unsafe_allow_html=True
         )
+
     with c3:
         st.markdown(
             f'<div class="metric-card"><div class="metric-number">{min(10, len(df))}</div><div class="metric-label">Preview Rows</div></div>',
@@ -434,6 +398,7 @@ try:
         charts = result["charts"]
 
         st.markdown("## Analysis Summary")
+
         st.markdown("### Overview")
         st.write(summary["overview"])
 
@@ -449,13 +414,12 @@ try:
         st.write(summary["final_summary"])
 
         st.markdown("## Charts")
-        if len(charts) < 2:
-            st.warning("The model returned fewer than 2 charts.")
-        else:
-            cols = st.columns(2)
-            for i, chart in enumerate(charts):
-                with cols[i % 2]:
-                    render_chart(df, chart)
+
+        cols = st.columns(2)
+
+        for i, chart in enumerate(charts):
+            with cols[i % 2]:
+                render_chart(df, chart)
 
         st.markdown("## Ask Questions About Your Data")
 
