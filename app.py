@@ -254,14 +254,14 @@ def inject_css(theme, lang):
         bg_base = "#060608"
         text_primary = "#F3F4F6"
         text_secondary = "#9CA3AF"
-        glass_panel = "rgba(18, 18, 22, 0.62)"
+        glass_panel = "rgba(18, 18, 22, 0.6)"
         border_subtle = "rgba(255, 255, 255, 0.06)"
         border_highlight = "rgba(255, 255, 255, 0.12)"
         border_left_glass = "rgba(255, 255, 255, 0.09)"
         border_card = "rgba(255, 255, 255, 0.08)"
         th_bg = "rgba(255, 255, 255, 0.02)"
         td_border = "rgba(255, 255, 255, 0.03)"
-        shadow_glass = "0 24px 48px rgba(0, 0, 0, 0.55)"
+        shadow_glass = "0 24px 48px rgba(0, 0, 0, 0.6)"
         dot_opacity = "0.6"
         dot_opacity_2 = "0.4"
     else:
@@ -307,12 +307,13 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
-/* Spacing scale: 8 16 24 32 40 48 60 */
+/* app-container from design: max-width 1100px, padding 60px 24px, gap 24px */
 .block-container {{
     max-width: 1100px !important;
     margin: 0 auto !important;
-    padding: 40px 24px 160px !important;
+    padding: 60px 24px 160px !important;
 }}
+.app-container {{ display: flex; flex-direction: column; gap: 24px; }}
 
 /* Utility bar: first row = pill controls (target Streamlit first row) */
 .block-container > div:first-of-type {{
@@ -348,7 +349,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .block-container > div:first-of-type > div:nth-child({"2" if lang == "en" else "3"}) .stButton button,
 .block-container > div:first-of-type > div:nth-child({"4" if theme == "dark" else "5"}) .stButton button {{ background: linear-gradient(135deg, #4F46E5, #9333EA) !important; color: white !important; }}
 
-/* Starfield / particles: more visible, subtle animation */
+/* Design body background: 6 radial gradients, 150px, fixed */
 .stApp::before {{
     content: "";
     position: fixed;
@@ -356,48 +357,33 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     width: 100vw; height: 100vh;
     pointer-events: none;
     z-index: 0;
-    background-image:
-        radial-gradient(2px 2px at 12% 15%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.85" if is_dark else "0.4"}) 100%, transparent),
-        radial-gradient(2px 2px at 88% 22%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.7" if is_dark else "0.35"}) 100%, transparent),
-        radial-gradient(1.5px 1.5px at 35% 65%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.8" if is_dark else "0.35"}) 100%, transparent),
-        radial-gradient(2px 2px at 72% 78%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.6" if is_dark else "0.3"}) 100%, transparent),
-        radial-gradient(1.5px 1.5px at 52% 35%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.75" if is_dark else "0.35"}) 100%, transparent),
-        radial-gradient(2px 2px at 8% 88%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.65" if is_dark else "0.3"}) 100%, transparent),
-        radial-gradient(1px 1px at 95% 55%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.7" if is_dark else "0.3"}) 100%, transparent);
-    background-size: 220px 220px;
+    background-image: {"radial-gradient(1px 1px at 10% 10%, rgba(255,255,255,0.6) 100%, transparent), radial-gradient(1.5px 1.5px at 80% 20%, rgba(255,255,255,0.4) 100%, transparent), radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.7) 100%, transparent), radial-gradient(2px 2px at 70% 80%, rgba(255,255,255,0.3) 100%, transparent), radial-gradient(1px 1px at 50% 30%, rgba(255,255,255,0.5) 100%, transparent), radial-gradient(1.5px 1.5px at 90% 90%, rgba(255,255,255,0.6) 100%, transparent)" if is_dark else "radial-gradient(1px 1px at 10% 10%, rgba(15,23,42,0.35) 100%, transparent), radial-gradient(1.5px 1.5px at 80% 20%, rgba(15,23,42,0.2) 100%, transparent), radial-gradient(1px 1px at 30% 60%, rgba(15,23,42,0.3) 100%, transparent)"};
+    background-size: 150px 150px;
     background-attachment: fixed;
-    animation: particleDrift 60s linear infinite;
-}}
-@keyframes particleDrift {{
-    0% {{ background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }}
-    100% {{ background-position: 220px 0, -220px 0, 0 220px, 0 -220px, 110px 110px, -110px -110px, 220px 220px; }}
-}}
-@keyframes starTwinkle {{
-    0%, 100% {{ opacity: 0.7; }}
-    50% {{ opacity: 1; }}
 }}
 [data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
 
-/* Noise overlay (dark) */
+/* Design body::after noise overlay */
 .stApp::after {{
     content: "";
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
     pointer-events: none;
-    z-index: 0;
-    opacity: {0.1 if is_dark else 0};
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 9999;
+    opacity: {0.12 if is_dark else 0};
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     mix-blend-mode: overlay;
 }}
 
 /* Light flares (dark only) */
+/* Design light flares */
 .light-flare-1 {{
     position: fixed;
     top: -10vh; left: 50%;
     transform: translateX(-50%);
     width: 30vw; height: 90vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(79, 70, 229, 0.42) 0%, transparent 100%);
+    background: radial-gradient(ellipse 50% 100% at top center, rgba(79, 70, 229, 0.4) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
     filter: blur(50px);
@@ -407,7 +393,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     top: -5vh; left: 50%;
     transform: translateX(-50%);
     width: 8vw; height: 70vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(147, 51, 234, 0.65) 0%, transparent 100%);
+    background: radial-gradient(ellipse 50% 100% at top center, rgba(147, 51, 234, 0.7) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
     filter: blur(30px);
@@ -458,34 +444,36 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .theme-toggle label:hover {{ color: {text_primary}; background: rgba(255,255,255,{"0.05" if is_dark else "0.1"}); }}
 
 /* Hero */
+/* Design hero */
 .hero {{
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
 }}
 .hero-orb {{
     width: 64px;
     height: 64px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff 0%, #A855F7 40%, #4F46E5 100%);
-    box-shadow: 0 0 32px rgba(168, 85, 247, 0.55), inset 0 -4px 12px rgba(0,0,0,0.4);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), inset 0 -4px 12px rgba(0,0,0,0.5);
     margin-bottom: 8px;
 }}
 .badge {{
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 18px;
-    background: rgba(255, 255, 255, {"0.04" if is_dark else "0.12"});
-    border: 1px solid {"rgba(255, 255, 255, 0.1)" if is_dark else "rgba(15, 23, 42, 0.1)"};
+    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: {"#E0E7FF" if is_dark else "#3730a3"};
+    color: #E0E7FF;
 }}
+.badge svg {{ color: #A855F7; }}
 .hero h1 {{
     font-size: 2.5rem;
     font-weight: 500;
@@ -493,7 +481,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     color: {text_primary} !important;
     line-height: 1.2;
 }}
-.hero-desc {{
+.hero-desc, .hero p {{
     color: {text_secondary} !important;
     font-size: 1.05rem;
     max-width: 500px;
@@ -501,6 +489,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 
 /* Glass panels */
+/* Design glass-panel */
 .glass-panel {{
     background: {glass_panel};
     backdrop-filter: blur(32px);
@@ -511,34 +500,49 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-radius: 24px;
     box-shadow: {shadow_glass};
     padding: 32px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
 }}
 .glass-panel:hover {{
     transform: translateY(-1px);
     box-shadow: {"0 28px 56px rgba(0,0,0,0.5)" if is_dark else "0 28px 56px rgba(15,23,42,0.14)"};
 }}
 
+/* Design section-title */
 .section-title {{
-    font-size: 0.8125rem;
-    font-weight: 600;
-    margin-bottom: 18px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 16px;
     color: {text_secondary} !important;
-    letter-spacing: 0.02em;
 }}
 
-/* Dropzone */
-.dropzone-outer {{
-    padding: 40px 32px;
-    border: 1px dashed {"rgba(255,255,255,0.18)" if is_dark else "rgba(15,23,42,0.2)"};
+/* Design dropzone */
+.dropzone, .dropzone-outer {{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    border: 1px dashed rgba(255,255,255,0.15);
     border-radius: 16px;
-    background: rgba(255, 255, 255, {"0.02" if is_dark else "0.4"});
+    background: rgba(255, 255, 255, 0.01);
     transition: all 0.3s ease;
     text-align: center;
 }}
-.dropzone-outer:hover {{
+.dropzone:hover, .dropzone-outer:hover {{
     border-color: rgba(168, 85, 247, 0.5);
-    background: rgba(168, 85, 247, {"0.06" if is_dark else "0.08"});
+    background: rgba(168, 85, 247, 0.05);
 }}
+.dropzone-icon {{
+    width: 48px; height: 48px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+    color: {text_primary};
+}}
+.dropzone h3, .dropzone-outer h3 {{ font-weight: 500; margin-bottom: 8px; font-size: 1rem; }}
+.dropzone p, .dropzone-outer p {{ color: {text_secondary}; font-size: 0.9rem; }}
 /* Uploader: keep inside container, no overflow */
 .uploader-wrap {{ width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }}
 [data-testid="stFileUploader"] {{
@@ -548,150 +552,163 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 [data-testid="stFileUploader"] section {{ max-width: 100% !important; }}
 [data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-weight: 500 !important; }}
 
-/* Dashboard grid */
+/* Design dashboard-grid, overview-card */
 .dashboard-grid {{ display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }}
+.overview-card {{ display: flex; flex-direction: column; gap: 12px; }}
 @media (max-width: 900px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
 
+/* Design ref-list-item, ref-icon-box, ref-text-box */
 .ref-list-item {{
     display: flex;
     align-items: center;
-    padding: 14px 10px;
+    padding: 12px 8px;
     background: transparent;
-    border-radius: 12px;
+    border-radius: 10px;
     gap: 16px;
     transition: background 0.2s ease;
 }}
-.ref-list-item:hover {{ background: rgba(255, 255, 255, {"0.04" if is_dark else "0.06"}); }}
+.ref-list-item:hover {{ background: rgba(255, 255, 255, 0.03); }}
 .ref-icon-box {{
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    background: rgba(255, 255, 255, {"0.05" if is_dark else "0.08"});
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid {border_card};
-    border-radius: 12px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: #E5E7EB !important;
 }}
-.ref-text-box {{ flex: 1; min-width: 0; }}
-.ref-title {{ font-size: 0.9375rem; font-weight: 600; color: {text_primary} !important; }}
-.ref-subtitle {{ font-size: 0.8125rem; color: {text_secondary} !important; margin-top: 2px; }}
+.ref-text-box {{ flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }}
+.ref-title {{ font-size: 0.95rem; font-weight: 500; color: {text_primary} !important; }}
+.ref-subtitle {{ font-size: 0.8rem; color: {text_secondary} !important; }}
+.ref-action-box {{ width: 32px; height: 32px; display: flex; align-items: center; justify-content: flex-end; color: #A855F7; }}
 
-.kpi-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }}
+/* Design kpi-grid, kpi-card */
+.kpi-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; height: 100%; }}
 .kpi-card {{
     background: transparent;
     border-radius: 16px;
     border: 1px solid {border_card};
-    padding: 22px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: transform 0.2s, box-shadow 0.2s;
-}}
-.kpi-card:hover {{
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,0,0,{"0.2" if is_dark else "0.08"});
 }}
 .kpi-label {{
     color: {text_secondary} !important;
-    font-size: 0.8125rem;
-    font-weight: 500;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 12px;
 }}
 .kpi-value {{
     font-size: 1.75rem;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.02em;
     color: {text_primary} !important;
 }}
 
-/* Table */
-.table-wrap {{
+/* Design table-container */
+.table-container, .table-wrap {{
     width: 100%;
     overflow-x: auto;
     border-radius: 16px;
     border: 1px solid {border_card};
     background: transparent;
 }}
-.table-wrap table {{ width: 100%; border-collapse: collapse; }}
-.table-wrap th {{
+.table-container table, .table-wrap table {{ width: 100%; border-collapse: collapse; text-align: left; }}
+.table-container th, .table-wrap th {{
     color: {text_secondary} !important;
-    font-weight: 600;
+    font-weight: 500;
     border-bottom: 1px solid {border_card};
     background: {th_bg} !important;
     padding: 16px 20px;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }}
-.table-wrap td {{
+.table-container td, .table-wrap td {{
     border-bottom: 1px solid {td_border};
     color: {text_primary} !important;
     padding: 16px 20px;
-    font-size: 0.875rem;
+    font-size: 0.9rem;
 }}
-.table-wrap tr:last-child td {{ border-bottom: none; }}
+.table-container tr:last-child td, .table-wrap tr:last-child td {{ border-bottom: none; }}
 
-/* CTA */
-.cta-container {{ display: flex; justify-content: center; margin: 24px 0; }}
+/* Design cta-container, btn-primary */
+.cta-container {{ display: flex; justify-content: center; margin: 8px 0; }}
+.cta-container .stButton > button,
+.stButton > button[kind="primary"],
 .stButton > button {{
     background: linear-gradient(90deg, #4F46E5, #9333EA) !important;
     color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    padding: 18px 44px !important;
-    font-size: 1.0625rem !important;
-    font-weight: 600 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding: 16px 40px !important;
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
     border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.42) !important;
+    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.4) !important;
     transition: all 0.3s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 12px !important;
 }}
 .stButton > button:hover {{
-    box-shadow: 0 12px 40px rgba(147, 51, 234, 0.55) !important;
-    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(147, 51, 234, 0.6) !important;
 }}
 
-.analysis-section {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }}
-@media (max-width: 900px) {{ .analysis-section {{ grid-template-columns: 1fr; }} }}
+/* Design analysis-section */
+.analysis-section {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }}
 
+/* Design charts-grid, chart-card */
 .charts-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }}
-@media (max-width: 900px) {{ .charts-grid {{ grid-template-columns: 1fr; }} }}
 .chart-card {{
     background: transparent;
     border-radius: 16px;
     border: 1px solid {border_card};
     padding: 24px;
-    min-height: 320px;
+    min-height: 300px;
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s, box-shadow 0.2s;
 }}
-.chart-card:hover {{ transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,0,0,{"0.15" if is_dark else "0.08"}); }}
-.chart-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }}
-.chart-title {{ font-weight: 600; font-size: 0.9375rem; color: {text_primary} !important; }}
+.chart-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }}
+.chart-title {{ font-weight: 500; font-size: 0.95rem; color: {text_primary} !important; }}
 .chart-placeholder {{
     flex: 1;
-    min-height: 260px;
-    border-radius: 12px;
-    border: 1px dashed {border_card};
+    border-radius: 8px;
+    border: 1px dashed rgba(255,255,255,0.1);
     display: flex;
     align-items: center;
     justify-content: center;
     color: {text_secondary};
-    font-size: 0.875rem;
-    background: rgba(255, 255, 255, {"0.02" if is_dark else "0.03"});
+    font-size: 0.85rem;
+    background: rgba(255, 255, 255, 0.01);
+}}
+@media (max-width: 900px) {{
+    .dashboard-grid, .charts-grid, .analysis-section {{ grid-template-columns: 1fr; }}
+    .kpi-grid {{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }}
 }}
 
-/* Chat bar: refined, less intrusive, premium */
-.chat-section-label {{ font-size: 0.8125rem; font-weight: 600; color: {text_secondary}; margin-bottom: 16px; margin-top: 32px; }}
+/* Design chat-console */
+.chat-section-label {{ font-size: 0.85rem; font-weight: 600; color: {text_secondary}; margin-bottom: 12px; margin-top: 40px; }}
 [data-testid="stChatInput"] {{
+    position: sticky !important;
+    bottom: 24px !important;
+    margin-top: 40px !important;
     background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.22) !important;
-    border-radius: 18px !important;
-    padding: 14px 22px !important;
-    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.38) !important;
-    max-width: 720px !important; margin-left: auto !important; margin-right: auto !important;
+    backdrop-filter: blur(40px) !important;
+    -webkit-backdrop-filter: blur(40px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    padding: 16px 24px !important;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 16px !important;
 }}
-[data-testid="stChatInput"]:focus-within {{ box-shadow: 0 10px 40px rgba(139, 92, 246, 0.5) !important; }}
-[data-testid="stChatInput"] input {{ color: #FFFFFF !important; font-size: 0.9375rem !important; }}
-[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.9) !important; font-weight: 500; }}
+[data-testid="stChatInput"] input {{ flex: 1; background: transparent; border: none; color: #FFFFFF !important; font-size: 1rem !important; outline: none; }}
+[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.9); font-weight: 500; }}
 [data-testid="stChatMessage"] {{ color: {text_primary} !important; }}
 
 .summary-block {{ margin-bottom: 20px; }}
@@ -825,7 +842,7 @@ try:
     st.markdown(f"""
     <div class="glass-panel">
         <h2 class="section-title">{t("data_preview")}</h2>
-        <div class="table-wrap">
+        <div class="table-container">
             <table><thead><tr>{thead}</tr></thead><tbody>{trows}</tbody></table>
         </div>
     </div>
