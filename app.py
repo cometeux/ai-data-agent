@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Data Analysis AI Agent",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -307,47 +307,16 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
-/* app-container from design: max-width 1100px, padding 60px 24px, gap 24px */
+/* Single container: max-width 1100px, consistent padding. No layout hacks. */
 .block-container {{
     max-width: 1100px !important;
     margin: 0 auto !important;
     padding: 60px 24px 160px !important;
 }}
-.app-container {{ display: flex; flex-direction: column; gap: 24px; }}
 
-/* Utility bar: first row = pill controls (target Streamlit first row) */
-.block-container > div:first-of-type {{
-    display: flex !important; align-items: center !important; justify-content: flex-end !important;
-    gap: 12px !important; margin-bottom: 32px !important; flex-wrap: wrap !important;
-}}
-.block-container > div:first-of-type > div:nth-child(2),
-.block-container > div:first-of-type > div:nth-child(3),
-.block-container > div:first-of-type > div:nth-child(4),
-.block-container > div:first-of-type > div:nth-child(5) {{
-    display: inline-flex !important; border-radius: 14px !important; overflow: hidden !important;
-    border: 1px solid {border_card} !important;
-    background: rgba(255,255,255,{"0.05" if is_dark else "0.08"}) !important;
-}}
-.block-container > div:first-of-type .stButton {{ margin: 0 !important; }}
-.block-container > div:first-of-type .stButton button {{
-    margin: 0 !important; border-radius: 0 !important; border: none !important;
-    background: transparent !important; color: {text_secondary} !important;
-    font-size: 0.8125rem !important; font-weight: 500 !important;
-    padding: 10px 18px !important; box-shadow: none !important;
-    min-height: auto !important; height: auto !important;
-    transition: all 0.2s ease !important;
-}}
-.block-container > div:first-of-type > div:nth-child(2) .stButton button {{ border-radius: 12px 0 0 12px !important; }}
-.block-container > div:first-of-type > div:nth-child(3) .stButton button {{ border-radius: 0 12px 12px 0 !important; }}
-.block-container > div:first-of-type > div:nth-child(4) .stButton button {{ border-radius: 12px 0 0 12px !important; }}
-.block-container > div:first-of-type > div:nth-child(5) .stButton button {{ border-radius: 0 12px 12px 0 !important; }}
-.block-container > div:first-of-type > div:nth-child(2) {{ border-right: none !important; border-radius: 14px 0 0 14px !important; }}
-.block-container > div:first-of-type > div:nth-child(3) {{ border-left: none !important; border-radius: 0 14px 14px 0 !important; margin-left: -1px !important; }}
-.block-container > div:first-of-type > div:nth-child(4) {{ border-right: none !important; border-radius: 14px 0 0 14px !important; }}
-.block-container > div:first-of-type > div:nth-child(5) {{ border-left: none !important; border-radius: 0 14px 14px 0 !important; margin-left: -1px !important; }}
-.block-container > div:first-of-type .stButton button:hover {{ color: {text_primary} !important; background: rgba(255,255,255,{"0.08" if is_dark else "0.12"}) !important; }}
-.block-container > div:first-of-type > div:nth-child({"2" if lang == "en" else "3"}) .stButton button,
-.block-container > div:first-of-type > div:nth-child({"4" if theme == "dark" else "5"}) .stButton button {{ background: linear-gradient(135deg, #4F46E5, #9333EA) !important; color: white !important; }}
+/* Sidebar utility bar only - does not affect main content */
+[data-testid="stSidebar"] .stRadio label {{ font-size: 0.8125rem; }}
+[data-testid="stSidebar"] > div {{ padding: 1rem 1rem 0; }}
 
 /* Design body background: 6 radial gradients, 150px, fixed */
 .stApp::before {{
@@ -727,24 +696,16 @@ footer {{ visibility: hidden; }}
 # -----------------------------
 inject_css(st.session_state.theme, st.session_state.lang)
 
-# Utility bar: language + theme as pill groups (5 columns: spacer, EN, AR, Dark, Light)
-_, col_en, col_ar, col_dark, col_light = st.columns([2, 1, 1, 1, 1])
-with col_en:
-    if st.button(t("lang_en"), key="pill_en"):
-        st.session_state.lang = "en"
-        st.rerun()
-with col_ar:
-    if st.button(t("lang_ar"), key="pill_ar"):
-        st.session_state.lang = "ar"
-        st.rerun()
-with col_dark:
-    if st.button(t("theme_dark"), key="pill_dark"):
-        st.session_state.theme = "dark"
-        st.rerun()
-with col_light:
-    if st.button(t("theme_light"), key="pill_light"):
-        st.session_state.theme = "light"
-        st.rerun()
+# Top utility: language + theme in sidebar (keeps main layout untouched)
+with st.sidebar:
+    st.caption("Language")
+    lang = st.radio("Language", options=["en", "ar"], format_func=lambda x: "English" if x == "en" else "العربية", index=0 if st.session_state.lang == "en" else 1, key="lang_radio", label_visibility="collapsed")
+    st.caption("Theme")
+    theme = st.radio("Theme", options=["dark", "light"], format_func=lambda x: "Dark" if x == "dark" else "Light", index=0 if st.session_state.theme == "dark" else 1, key="theme_radio", label_visibility="collapsed")
+if lang != st.session_state.lang or theme != st.session_state.theme:
+    st.session_state.lang = lang
+    st.session_state.theme = theme
+    st.rerun()
 
 # Light flares (dark only)
 if st.session_state.theme == "dark":
