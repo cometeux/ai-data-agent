@@ -898,29 +898,126 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     .kpi-grid {{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }}
 }}
 
-/* Floating AI bar: slim, elegant command bar (not oversized) */
-.chat-section-label {{ font-size: 0.85rem; font-weight: 600; color: {text_secondary}; margin-bottom: 8px; margin-top: 32px; }}
-.suggested-questions {{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }}
-.suggested-questions button {{ font-size: 0.8125rem; padding: 8px 14px; border-radius: 20px; }}
+/* ========== AI ASSISTANT SECTION: conversation + chips + command bar ========== */
+.chat-section-title {{
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: {text_secondary} !important;
+    margin-bottom: 16px;
+    margin-top: 40px;
+}}
+
+/* Conversation area: message bubbles with clear hierarchy */
+.chat-conversation-wrap {{
+    margin-bottom: 20px;
+}}
+[data-testid="stChatMessage"] {{
+    padding: 0 !important;
+    margin-bottom: 16px !important;
+    border: none !important;
+    background: transparent !important;
+}}
+[data-testid="stChatMessage"] > div {{
+    background: {glass_panel} !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid {border_subtle} !important;
+    border-radius: 16px !important;
+    padding: 16px 20px !important;
+    max-width: 85%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}}
+/* User messages: right-aligned, distinct tint (odd positions) */
+[data-testid="stChatMessage"]:nth-of-type(odd) > div {{
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(147, 51, 234, 0.18)) !important;
+    border-color: rgba(147, 51, 234, 0.25) !important;
+}}
+/* Assistant messages: left-aligned glass card (even positions) */
+[data-testid="stChatMessage"]:nth-of-type(even) > div {{
+    margin-right: auto !important;
+    margin-left: 0 !important;
+}}
+[data-testid="stChatMessage"] p {{
+    color: {text_primary} !important;
+    font-size: 0.9375rem !important;
+    line-height: 1.6 !important;
+    margin: 0 !important;
+}}
+
+/* Suggested questions: lightweight chips (secondary to command bar) */
+.chat-suggested-label {{
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: {text_secondary} !important;
+    margin-bottom: 10px;
+}}
+/* Suggested chips only: innermost block that contains chat input (exclude CTA and other buttons) */
+.block-container [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"]):not([data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"])) [data-testid="stButton"] button {{
+    background: rgba(255,255,255,{"0.06" if is_dark else "0.12"}) !important;
+    color: {text_secondary} !important;
+    border: 1px solid {border_subtle} !important;
+    padding: 8px 14px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 500 !important;
+    border-radius: 20px !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease !important;
+}}
+.block-container [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"]):not([data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"])) [data-testid="stButton"] button:hover {{
+    background: rgba(255,255,255,{"0.1" if is_dark else "0.18"}) !important;
+    color: {text_primary} !important;
+    border-color: {border_highlight} !important;
+}}
+
+/* Integrated command bar: one slim bar, input fills space, send at edge */
 [data-testid="stChatInput"] {{
     position: sticky !important;
     bottom: 24px !important;
-    margin-top: 24px !important;
-    background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
-    backdrop-filter: blur(24px) !important;
-    -webkit-backdrop-filter: blur(24px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 24px !important;
-    padding: 12px 20px !important;
-    min-height: 52px !important;
-    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4) !important;
+    margin-top: 16px !important;
+    margin-bottom: 0 !important;
+    background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 50%, #8B5CF6 100%) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 28px !important;
+    padding: 10px 16px 10px 20px !important;
+    min-height: 48px !important;
+    height: auto !important;
+    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35) !important;
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
 }}
-[data-testid="stChatInput"] input {{ flex: 1; background: transparent; border: none; color: #FFFFFF !important; font-size: 0.9375rem !important; outline: none; min-height: 28px !important; }}
-[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.85); font-weight: 500; }}
-[data-testid="stChatMessage"] {{ color: {text_primary} !important; }}
+[data-testid="stChatInput"] > div {{
+    flex: 1 !important;
+    min-width: 0 !important;
+    background: transparent !important;
+    border: none !important;
+}}
+[data-testid="stChatInput"] input {{
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    border: none !important;
+    color: #FFFFFF !important;
+    font-size: 0.9375rem !important;
+    outline: none !important;
+    padding: 6px 0 !important;
+}}
+[data-testid="stChatInput"] input::placeholder {{
+    color: rgba(255, 255, 255, 0.8) !important;
+}}
+/* Send button inside command bar: compact at the edge */
+[data-testid="stChatInput"] button {{
+    flex-shrink: 0 !important;
+    min-width: 36px !important;
+    padding: 8px !important;
+}}
 
 .summary-block {{ margin-bottom: 20px; }}
 .summary-block h4 {{ font-size: 0.9375rem; font-weight: 600; color: {text_primary}; margin-bottom: 10px; }}
@@ -1197,30 +1294,35 @@ try:
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
         st.rerun()
 
-    st.markdown(f'<div class="chat-section-label">{t("ask_questions")}</div>', unsafe_allow_html=True)
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+    # AI Assistant section: one container for hierarchy (title → conversation → chips → command bar)
+    with st.container():
+        st.markdown(f'<h2 class="chat-section-title">{t("ask_questions")}</h2>', unsafe_allow_html=True)
 
-    # Suggested follow-up questions (chips)
-    st.markdown(f'<div class="chat-section-label">{t("suggested_questions")}</div>', unsafe_allow_html=True)
-    suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
-    sug_cols = st.columns(5)
-    for i, q in enumerate(suggested_qs):
-        with sug_cols[i % 5]:
-            if st.button(q, key=f"sug_{i}"):
-                st.session_state.pending_question = q
-                st.rerun()
+        # Conversation history: premium message bubbles
+        for msg in st.session_state.chat_history:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
 
-    user_question = st.chat_input(t("ask_ai_placeholder"))
-    if user_question:
-        st.session_state.chat_history.append({"role": "user", "content": user_question})
-        with st.chat_message("user"):
-            st.write(user_question)
-        with st.chat_message("assistant"):
-            answer = ask_agent_question(df, st.session_state.analysis_result or {}, user_question)
-            st.write(answer)
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+        # Suggested questions: compact chips (low visual weight)
+        st.markdown(f'<div class="chat-suggested-label">{t("suggested_questions")}</div>', unsafe_allow_html=True)
+        suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
+        sug_cols = st.columns(5)
+        for i, q in enumerate(suggested_qs):
+            with sug_cols[i % 5]:
+                if st.button(q, key=f"sug_{i}"):
+                    st.session_state.pending_question = q
+                    st.rerun()
+
+        # Integrated command bar (anchored below chips)
+        user_question = st.chat_input(t("ask_ai_placeholder"))
+        if user_question:
+            st.session_state.chat_history.append({"role": "user", "content": user_question})
+            with st.chat_message("user"):
+                st.write(user_question)
+            with st.chat_message("assistant"):
+                answer = ask_agent_question(df, st.session_state.analysis_result or {}, user_question)
+                st.write(answer)
+            st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
 except Exception as e:
     st.error(str(e))
