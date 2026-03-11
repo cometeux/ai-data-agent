@@ -8,7 +8,7 @@ from openai import OpenAI
 
 st.set_page_config(
     page_title="Data Analysis AI Agent",
-    page_icon="📊",
+    page_icon="⚈",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -110,6 +110,36 @@ TRANSLATIONS = {
         "data_quality": "جودة البيانات",
         "duplicates": "التكرارات",
         "missing_vals": "القيم المفقودة",
+        "studio": "ستوديو",
+        "data_health": "لوحة صحة البيانات",
+        "readiness": "درجة الجاهزية",
+        "null_pct": "نسبة الفراغات",
+        "dataset_profiling": "تحليل مجموعة البيانات",
+        "rec_measures": "المقاييس الموصى بها",
+        "business_lens": "المنظور التجاري",
+        "quality_metrics": "مقاييس الجودة والشكل",
+        "integrity": "درجة النزاهة",
+        "usable_cols": "الأعمدة القابلة للاستخدام",
+        "missing_cells": "الخلايا المفقودة",
+        "top_finding": "أبرز النتائج",
+        "biggest_risk": "أكبر المخاطر",
+        "notable_trend": "اتجاه لافت",
+        "chart_studio": "استوديو الرسوم البيانية",
+        "regen": "إعادة التوليد",
+        "ai_insight": "رؤية الذكاء الاصطناعي",
+        "session_memory": "ذاكرة الجلسة",
+        "segment_compare": "مقارنة الشرائح",
+        "primary_segment": "الشريحة الأساسية",
+        "compare_against": "المقارنة مع",
+        "last_sync": "آخر مزامنة",
+        "export_csv": "تصدير CSV",
+        "gen_report": "إنشاء تقرير تنفيذي",
+        "exec": "تنفيذي",
+        "analyst": "محلل",
+        "story": "قصة",
+        "finance_lens": "المالية والنمو",
+        "ops_lens": "كفاءة العمليات",
+        "sales_lens": "أداء المبيعات",
     },
 }
 
@@ -134,6 +164,22 @@ if "lang" not in st.session_state:
     st.session_state.lang = "en"
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
+if "business_lens" not in st.session_state:
+    st.session_state.business_lens = "Finance & Growth"
+if "analyst_mode" not in st.session_state:
+    st.session_state.analyst_mode = "Exec"
+if "chart_studio_type" not in st.session_state:
+    st.session_state.chart_studio_type = "bar"
+if "chart_studio_x" not in st.session_state:
+    st.session_state.chart_studio_x = None
+if "chart_studio_y" not in st.session_state:
+    st.session_state.chart_studio_y = None
+if "chart_studio_agg" not in st.session_state:
+    st.session_state.chart_studio_agg = "sum"
+if "segment_primary" not in st.session_state:
+    st.session_state.segment_primary = None
+if "segment_compare" not in st.session_state:
+    st.session_state.segment_compare = "Global Average"
 
 
 # -----------------------------
@@ -203,6 +249,16 @@ def profile_dataframe(df):
     high_missing = [c for c, p in profile["missing_pct"].items() if p > 20]
     if high_missing:
         profile["quality_signals"].append(f"High missing (>20%): {', '.join(high_missing[:3])}{'...' if len(high_missing) > 3 else ''}")
+    # Readiness: 100 - avg null pct - penalty for duplicates
+    avg_null = sum(profile["missing_pct"].values()) / len(profile["missing_pct"]) if profile["missing_pct"] else 0
+    dup_penalty = min(10, profile["duplicate_rows"] // 100)
+    profile["readiness_pct"] = max(0, min(100, round(100 - avg_null - dup_penalty)))
+    # Integrity score (usable columns = non-null-heavy)
+    usable = sum(1 for c, p in profile["missing_pct"].items() if p < 50)
+    profile["usable_columns"] = usable
+    profile["integrity_score"] = round(100 * usable / len(df.columns)) if len(df.columns) else 0
+    # Recommended measures: numeric columns
+    profile["recommended_measures"] = [c for c, t in profile["column_types"].items() if t == "numeric"][:5]
     return profile
 
 
@@ -415,6 +471,8 @@ def inject_css(theme, lang):
         .chart-header { flex-direction: row-reverse; }
         .table-wrap table { direction: rtl; text-align: right; }
         [data-testid="column"] { text-align: right; }
+        .insight-card.priority { border-left: none; border-right: 3px solid #9333EA; }
+        .explain-panel { border-left: none; border-right: 2px solid #4F46E5; }
         """
 
     st.markdown(f"""
@@ -432,99 +490,75 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
-/* Single container: max-width 1100px (design app-container) */
+/* Variant: app-container max-width 1400px, padding 40px 24px 120px */
 .block-container {{
-    max-width: 1100px !important;
+    max-width: 1400px !important;
     margin: 0 auto !important;
-    padding: 40px 24px 80px !important;
+    padding: 40px 24px 120px !important;
 }}
 
-/* Navbar (design: sticky, glass, VARAIANT + lang dropdown + theme pill) */
+/* Variant: sticky navbar – Data Soul Studio, compact controls */
 .navbar {{
     position: sticky;
     top: 0;
     z-index: 100;
-    isolation: isolate;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 24px;
+    padding: 16px 40px;
     background: {glass_panel};
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid {border_subtle};
-    border-radius: 24px;
-    margin-bottom: 24px;
+    margin-bottom: 0;
 }}
-.nav-logo {{
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: {text_primary} !important;
-}}
-.nav-controls {{ display: flex; gap: 20px; align-items: center; }}
-.lang-dropdown {{ position: relative; display: inline-block; }}
-.lang-trigger {{
-    background: transparent;
-    border: 1px solid {border_subtle};
-    color: {text_primary};
-    padding: 8px 14px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 500;
+.nav-logo {{ font-weight: 700; font-size: 1.1rem; color: {text_primary} !important; }}
+.nav-logo span {{ font-weight: 400; opacity: 0.5; margin-left: 8px; }}
+.nav-controls {{ display: flex; gap: 10px; align-items: center; }}
+.nav-tag {{ padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; border-radius: 8px; font-size: 0.75rem; color: {text_secondary}; }}
+.nav-tag.highlight {{ border-color: #9333EA; color: {text_primary}; }}
+.lang-switcher {{
     display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    cursor: default;
-}}
-.lang-menu {{
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: {glass_panel};
-    backdrop-filter: blur(20px);
-    border: 1px solid {border_subtle};
-    border-radius: 12px;
-    min-width: 140px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(10px);
-    transition: all 0.2s;
-    z-index: 101;
-}}
-.lang-dropdown:hover .lang-menu {{ opacity: 1; visibility: visible; transform: translateY(0); }}
-.lang-option {{
-    padding: 10px 16px;
-    display: block;
-    font-size: 0.9rem;
-    color: {text_primary} !important;
-    text-decoration: none;
-    transition: background 0.2s;
-}}
-.lang-option:hover {{ background: rgba(255,255,255,0.08); }}
-.theme-switch-pill {{
-    display: inline-flex;
-    border-radius: 50px;
     background: {"rgba(255,255,255,0.08)" if is_dark else "rgba(0,0,0,0.05)"};
     border: 1px solid {border_subtle};
-    padding: 4px;
+    border-radius: 10px;
+    padding: 3px;
     gap: 2px;
 }}
-.theme-option {{
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: {text_secondary} !important;
+.lang-btn {{
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: {text_secondary};
+    border-radius: 7px;
+    cursor: pointer;
     text-decoration: none;
-    transition: all 0.2s;
+    letter-spacing: 0.03em;
 }}
-.theme-option:hover {{ color: {text_primary} !important; background: rgba(255,255,255,{"0.08" if is_dark else "0.1"}); }}
-.theme-option.active {{
-    background: {"#fff" if is_dark else "#FBBF24"};
-    color: {"#1E293B" if is_dark else "#1E293B"} !important;
-    box-shadow: 0 0 12px rgba(147, 51, 234, {"0.6" if is_dark else "0.3"});
+.lang-btn:hover {{ color: {text_primary}; }}
+.lang-btn.active {{ background: #9333EA; color: #fff; }}
+.theme-option {{
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 7px;
+    text-decoration: none;
+    color: {text_secondary} !important;
 }}
+.theme-option.active {{ background: #9333EA; color: #fff !important; }}
+.theme-switch-pill {{
+    display: inline-flex;
+    border-radius: 10px;
+    background: {"rgba(255,255,255,0.08)" if is_dark else "rgba(0,0,0,0.05)"};
+    border: 1px solid {border_subtle};
+    padding: 3px;
+    gap: 2px;
+}}
+.lang-menu {{ display: none; }}
+.lang-dropdown {{ display: none; }}
+.lang-trigger {{ display: none; }}
 
 /* Design: star layers (body::before/after + star-layer-3/4) */
 .stApp::before {{
@@ -566,23 +600,23 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
 
-/* Light flares (design: 60vw/100vh blur 80px, 30vw/80vh blur 60px) */
+/* Variant: light flares */
 .light-flare-1 {{
     position: fixed;
-    top: -10vh; left: 50%;
+    top: -20vh; left: 50%;
     transform: translateX(-50%);
-    width: 60vw; height: 100vh;
-    background: radial-gradient(circle at center, rgba(79, 70, 229, 0.45) 0%, transparent 70%);
+    width: 70vw; height: 120vh;
+    background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.35) 0%, rgba(147, 51, 234, 0.15) 40%, transparent 70%);
     pointer-events: none;
     z-index: 0;
-    filter: blur(80px);
+    filter: blur(90px);
 }}
 .light-flare-2 {{
     position: fixed;
-    top: -5vh; left: 50%;
+    top: 20vh; left: 50%;
     transform: translateX(-50%);
-    width: 30vw; height: 80vh;
-    background: radial-gradient(circle at center, rgba(147, 51, 234, 0.45) 0%, transparent 70%);
+    width: 40vw; height: 60vh;
+    background: radial-gradient(ellipse at center, rgba(147, 51, 234, 0.2) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
     filter: blur(60px);
@@ -634,48 +668,158 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 
 /* Hero */
 /* Design hero */
+/* Variant: hero – 80px orb, title, subtitle */
 .hero {{
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
 }}
 .hero-orb {{
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, #ffffff 0%, #A855F7 40%, #4F46E5 100%);
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), inset 0 -4px 12px rgba(0,0,0,0.5);
-    margin-bottom: 8px;
+    box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
 }}
-.badge {{
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    background: rgba(255, 255, 255, 0.05);
+.hero h1 {{ font-size: 2rem; font-weight: 600; color: {text_primary} !important; }}
+.hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 1rem; max-width: 600px; line-height: 1.5; }}
+
+/* Variant: grid-main three-column 320px 1fr 320px */
+.grid-main {{
+    display: grid;
+    grid-template-columns: 320px 1fr 320px;
+    gap: 24px;
+    align-items: start;
+}}
+@media (max-width: 1200px) {{ .grid-main {{ grid-template-columns: 1fr; }} }}
+
+/* Variant: section-title 0.75rem uppercase letter-spacing 0.1em */
+.section-title {{
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: {text_secondary} !important;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}}
+
+/* Variant: stats-row, kpi-card */
+.stats-row {{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}}
+.stats-row .kpi-card {{
+    background: rgba(255, 255, 255, 0.03);
     border: 1px solid {border_subtle};
     border-radius: 16px;
-    font-size: 0.85rem;
-    font-weight: 500;
+    padding: 16px;
+}}
+.stats-row .kpi-label {{ font-size: 0.75rem; color: {text_secondary}; }}
+.stats-row .kpi-value {{ font-size: 1.25rem; font-weight: 700; margin-top: 4px; }}
+
+/* Variant: health-score bar */
+.health-score {{
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin: 12px 0;
+    overflow: hidden;
+}}
+.health-fill {{
+    height: 100%;
+    background: linear-gradient(90deg, #10B981, #34D399);
+    border-radius: 4px;
+}}
+
+/* Variant: tag, tag-grid */
+.tag {{
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid {border_subtle};
+    border-radius: 8px;
+    font-size: 0.75rem;
+    color: {text_secondary};
+}}
+.tag.highlight {{ border-color: #9333EA; color: {text_primary}; }}
+.tag-grid {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+
+/* Variant: insight-grid, insight-card */
+.insight-grid {{
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+}}
+.insight-card {{
+    padding: 20px;
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid {border_subtle};
+}}
+.insight-card.priority {{ border-left: 3px solid #9333EA; }}
+.insight-card .kpi-label {{ font-size: 0.7rem; margin-bottom: 8px; }}
+.insight-card .insight-text {{ font-size: 0.9rem; margin-top: 8px; color: {text_primary}; }}
+
+/* Variant: chart-area, chart-frame, chart-controls, explain-panel */
+.chart-area {{
+    margin-top: 24px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px solid {border_subtle};
+    padding: 24px;
+}}
+.chart-frame {{ min-height: 300px; border-radius: 12px; }}
+.chart-controls {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }}
+.select-box {{
+    background: rgba(255,255,255,0.05);
+    border: 1px solid {border_subtle};
     color: {text_primary};
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
 }}
-.badge svg {{ color: #A855F7; }}
-.hero h1 {{
-    font-size: 2.5rem;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: {text_primary} !important;
-    line-height: 1.2;
+.explain-panel {{
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    font-size: 0.85rem;
+    border-left: 2px solid #4F46E5;
 }}
-.hero-desc, .hero p {{
-    color: {text_secondary} !important;
-    font-size: 1.05rem;
-    max-width: 500px;
-    line-height: 1.55;
+
+/* Variant: sidebar-list, history-item */
+.sidebar-list {{ display: flex; flex-direction: column; gap: 12px; }}
+.history-item {{
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid {border_subtle};
+    font-size: 0.8rem;
 }}
+
+/* Variant: mode-selector, mode-btn */
+.mode-selector {{ display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 12px; margin-bottom: 20px; }}
+.mode-btn {{ flex: 1; padding: 6px; font-size: 0.7rem; border: none; background: transparent; color: {text_secondary}; border-radius: 8px; cursor: pointer; }}
+.mode-btn.active {{ background: #9333EA; color: white; }}
+
+/* Variant: suggested chips */
+.suggested-chips {{ display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }}
+.chip {{
+    padding: 8px 16px;
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 20px;
+    font-size: 0.8rem;
+}}
+
+/* Variant: export-row, btn-ghost */
+.export-row {{ display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid {border_subtle}; }}
+.btn-ghost {{ padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; color: {text_primary}; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }}
 
 /* Glass panels */
 /* Design glass-panel */
@@ -695,15 +839,6 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     transition: background 0.3s ease, border 0.3s ease;
 }}
 
-/* Design section-title (uppercase, letter-spacing) */
-.section-title {{
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: {text_secondary} !important;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}}
 
 /* Design dropzone */
 .dropzone, .dropzone-outer {{
@@ -973,24 +1108,28 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-color: {border_highlight} !important;
 }}
 
-/* Integrated command bar: one slim bar, input fills space, send at edge */
+/* Variant: chat-console fixed bottom, max-width 800px, border-radius 50px */
 [data-testid="stChatInput"] {{
-    position: sticky !important;
-    bottom: 24px !important;
+    position: fixed !important;
+    bottom: 32px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 100% !important;
+    max-width: 800px !important;
+    margin: 0 !important;
     margin-top: 16px !important;
-    margin-bottom: 0 !important;
-    background: linear-gradient(90deg, #4F46E5 0%, #7C3AED 50%, #8B5CF6 100%) !important;
+    background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
     backdrop-filter: blur(16px) !important;
     -webkit-backdrop-filter: blur(16px) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 28px !important;
-    padding: 10px 16px 10px 20px !important;
+    border-radius: 50px !important;
+    padding: 12px 24px !important;
     min-height: 48px !important;
-    height: auto !important;
-    box-shadow: 0 4px 20px rgba(79, 70, 229, 0.35) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 16px !important;
+    z-index: 1000 !important;
 }}
 [data-testid="stChatInput"] > div {{
     flex: 1 !important;
@@ -1058,18 +1197,12 @@ nav_theme_light_active = " active" if theme == "light" else ""
 # Navbar (sticky, design-fidelity: VARAIANT + lang links + theme pill)
 st.markdown(f"""
 <nav class="navbar">
-    <div class="nav-logo">VARAIANT</div>
+    <div class="nav-logo">Data Soul <span>{t("studio")}</span></div>
     <div class="nav-controls">
-        <div class="lang-dropdown">
-            <span class="lang-trigger">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                <span>{nav_lang_label}</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
-            </span>
-            <div class="lang-menu">
-                <a href="?lang=en" class="lang-option">English</a>
-                <a href="?lang=ar" class="lang-option">العربية</a>
-            </div>
+        <div class="nav-tag highlight">v2.4 Pro</div>
+        <div class="lang-switcher">
+            <a href="?lang=en" class="lang-btn{" active" if lang == "en" else ""}">EN</a>
+            <a href="?lang=ar" class="lang-btn{" active" if lang == "ar" else ""}">AR</a>
         </div>
         <div class="theme-switch-pill">
             <a href="?theme=dark" class="theme-option{nav_theme_dark_active}">Dark</a>
@@ -1084,20 +1217,7 @@ st.markdown('<div class="star-layer-3"></div><div class="star-layer-4"></div>', 
 if st.session_state.theme == "dark":
     st.markdown('<div class="light-flare-1"></div><div class="light-flare-2"></div>', unsafe_allow_html=True)
 
-# Hero
-st.markdown(f"""
-<div class="hero">
-    <div class="hero-orb"></div>
-    <div class="badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-        {t("badge")}
-    </div>
-    <h1>{t("app_title")}</h1>
-    <p class="hero-desc">{t("hero_desc")}</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Data Source: one container = one card. Title + uploader render INSIDE the same block; CSS styles that block as glass panel.
+# Data Source: one container = one card. Title + uploader render INSIDE the same block.
 with st.container():
     st.markdown(f'<h2 class="section-title">{t("data_source")}</h2>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader(
@@ -1111,6 +1231,16 @@ if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
         reset_app_state()
     st.stop()
+
+# Variant: hero with filename (after we have a file)
+hero_sub = "Deep semantic profiling and automated visualization for " + html.escape(uploaded_file.name)
+st.markdown(f"""
+<div class="hero">
+    <div class="hero-orb"></div>
+    <h1>Data Soul</h1>
+    <p class="hero-desc">{hero_sub}</p>
+</div>
+""", unsafe_allow_html=True)
 
 if st.session_state.last_uploaded_name != uploaded_file.name:
     st.session_state.analysis_result = None
@@ -1127,162 +1257,163 @@ try:
     dup_count = profile["duplicate_rows"]
     missing_note = str(profile["missing_total"]) if profile["missing_total"] > 0 else "—"
 
-    # Dashboard grid: compact overview + balanced KPI row
-    st.markdown(f"""
-    <div class="dashboard-grid">
-        <div class="glass-panel overview-card">
-            <h2 class="section-title">{t("dataset_overview")}</h2>
-            <div class="ref-list-item">
-                <div class="ref-icon-box">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                </div>
-                <div class="ref-text-box">
-                    <div class="ref-title">{html.escape(uploaded_file.name)}</div>
-                    <div class="ref-subtitle">{t("file_meta").format(size=size_mb, rows=n_rows)}</div>
-                </div>
-            </div>
-            <div class="ref-list-item">
-                <div class="ref-icon-box" style="color: #A78BFA;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline></svg>
-                </div>
-                <div class="ref-text-box">
-                    <div class="ref-title">{t("data_type")}</div>
-                    <div class="ref-subtitle">{data_types_str}</div>
-                </div>
-            </div>
-            <div class="ref-list-item">
-                <div class="ref-icon-box" style="color: #94A3B8;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                </div>
-                <div class="ref-text-box">
-                    <div class="ref-title">{t("data_quality")}</div>
-                    <div class="ref-subtitle">{t("duplicates")}: {dup_count} · {t("missing_vals")}: {missing_note}</div>
-                </div>
-            </div>
-        </div>
-        <div class="glass-panel">
-            <h2 class="section-title">{t("shape")}</h2>
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div class="kpi-label">{t("total_rows")}</div>
-                    <div class="kpi-value">{n_rows:,}</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">{t("total_columns")}</div>
-                    <div class="kpi-value">{n_cols}</div>
-                </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">{t("preview_rows")}</div>
-                    <div class="kpi-value">{preview_n}</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Variant: three-column grid-main (320 | 1fr | 320)
+    readiness = profile.get("readiness_pct", 82)
+    null_pct_str = f"{sum(profile['missing_pct'].values()) / len(profile['missing_pct']):.1f}%" if profile["missing_pct"] else "0%"
+    num_count = sum(1 for v in profile["column_types"].values() if v == "numeric")
+    cat_count = sum(1 for v in profile["column_types"].values() if v == "categorical")
+    dt_count = sum(1 for v in profile["column_types"].values() if v == "datetime")
+    rec_measures = profile.get("recommended_measures", [])[:3]
+    rec_tags = "".join(f'<span class="tag highlight">{m}</span>' for m in rec_measures) or '<span class="tag">—</span>'
+    type_tags = f'<span class="tag"># Numeric ({num_count})</span><span class="tag">A Categorical ({cat_count})</span><span class="tag">📅 Datetime ({dt_count})</span>'
+    health_tags = "".join(f'<div class="tag">{html.escape(s)}</div>' for s in profile.get("quality_signals", ["—"])[:2])
+    left_rail, main_rail, right_rail = st.columns([1, 2.5, 1])
 
-    # Data Preview: fixed-height scrollable table inside one glass panel (no detached table)
-    preview_df = df.head(50)
-    thead = "".join(f"<th>{html.escape(str(c))}</th>" for c in preview_df.columns)
-    trows = ""
-    for _, row in preview_df.iterrows():
-        trows += "<tr>" + "".join(f"<td>{html.escape(str(row[c]))}</td>" for c in preview_df.columns) + "</tr>"
-    st.markdown(f"""
-    <div class="glass-panel">
-        <h2 class="section-title">{t("data_preview")}</h2>
-        <div class="table-scroll-viewport">
-            <table><thead><tr>{thead}</tr></thead><tbody>{trows}</tbody></table>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # CTA
-    st.markdown('<div class="cta-container">', unsafe_allow_html=True)
-    if st.button(t("generate_summary_short")):
-        with st.spinner(t("analyzing")):
-            profile = profile_dataframe(df)
-            st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
-        st.rerun()
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    result = st.session_state.analysis_result
-
-    if result is not None:
-        summary = result["summary"]
-        charts = result.get("charts", [])
-
-        # Analysis Summary panel
+    with left_rail:
         st.markdown(f"""
         <div class="glass-panel">
-            <h2 class="section-title">{t("analysis_summary")}</h2>
-            <div class="analysis-section">
-                <div class="ref-list-item">
-                    <div class="ref-icon-box" style="color: #34D399;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                    </div>
-                    <div class="ref-text-box">
-                        <div class="ref-title">{t("overview")}</div>
-                        <div class="ref-subtitle">{t("overview_sub")}</div>
-                    </div>
-                </div>
-                <div class="ref-list-item">
-                    <div class="ref-icon-box" style="color: #FBBF24;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-                    </div>
-                    <div class="ref-text-box">
-                        <div class="ref-title">{t("key_insights")}</div>
-                        <div class="ref-subtitle">{t("key_insights_sub")}</div>
-                    </div>
-                </div>
-                <div class="ref-list-item">
-                    <div class="ref-icon-box" style="color: #60A5FA;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                    </div>
-                    <div class="ref-text-box">
-                        <div class="ref-title">{t("recommendations")}</div>
-                        <div class="ref-subtitle">{t("recommendations_sub")}</div>
-                    </div>
-                </div>
-                <div class="ref-list-item">
-                    <div class="ref-icon-box" style="color: #F87171;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                    </div>
-                    <div class="ref-text-box">
-                        <div class="ref-title">{t("final_summary")}</div>
-                        <div class="ref-subtitle">{t("final_summary_sub")}</div>
-                    </div>
-                </div>
+            <h2 class="section-title">{t("data_health")}</h2>
+            <div class="kpi-label">{t("readiness")}</div>
+            <div class="health-score"><div class="health-fill" style="width: {readiness}%;"></div></div>
+            <div class="stats-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 12px;">
+                <div class="kpi-card"><div class="kpi-label">{t("null_pct")}</div><div class="kpi-value" style="color: #F87171;">{null_pct_str}</div></div>
+                <div class="kpi-card"><div class="kpi-label">{t("duplicates")}</div><div class="kpi-value">{dup_count}</div></div>
+            </div>
+            <div class="sidebar-list">{health_tags}</div>
+        </div>
+        <div class="glass-panel">
+            <h2 class="section-title">{t("dataset_profiling")}</h2>
+            <div class="tag-grid">{type_tags}</div>
+            <div class="kpi-label" style="margin-top: 8px;">{t("rec_measures")}</div>
+            <div class="tag-grid">{rec_tags}</div>
+        </div>
+        <div class="glass-panel">
+            <h2 class="section-title">{t("business_lens")}</h2>
+        </div>
+        """, unsafe_allow_html=True)
+        st.session_state.business_lens = st.selectbox(
+            "Lens", options=[t("finance_lens"), t("ops_lens"), t("sales_lens")],
+            index=0, key="business_lens", label_visibility="collapsed"
+        )
+
+    with main_rail:
+        # Quality & Shape Metrics (Variant)
+        usable = profile.get("usable_columns", n_cols)
+        integrity = profile.get("integrity_score", 94)
+        st.markdown(f"""
+        <div class="glass-panel">
+            <h2 class="section-title">{t("quality_metrics")}</h2>
+            <div class="stats-row">
+                <div class="kpi-card"><div class="kpi-label">{t("integrity")}</div><div class="kpi-value">{integrity}/100</div></div>
+                <div class="kpi-card"><div class="kpi-label">{t("usable_cols")}</div><div class="kpi-value">{usable} / {n_cols}</div></div>
+                <div class="kpi-card"><div class="kpi-label">{t("missing_cells")}</div><div class="kpi-value">{profile['missing_total']:,}</div></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
+        if st.button(t("generate_summary_short"), key="cta_gen"):
+            with st.spinner(t("analyzing")):
+                st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
+            st.rerun()
+        result = st.session_state.analysis_result
 
-        # Summary content inside same panel (no detached blocks)
-        def esc(s):
-            return html.escape(str(s)) if s else ""
-        overview_p = esc(summary.get("overview"))
-        insights_html = "".join(f"<li>{esc(item)}</li>" for item in summary.get("key_insights", []))
-        recs_html = "".join(f"<li>{esc(item)}</li>" for item in summary.get("recommendations", []))
-        final_p = esc(summary.get("final_summary"))
+        if result is not None:
+            summary = result["summary"]
+            charts = result.get("charts", [])
+            def esc(s):
+                return html.escape(str(s)) if s else ""
+            top_finding = esc(summary.get("top_finding") or summary.get("key_insights", [None])[0] if summary.get("key_insights") else summary.get("overview"))
+            biggest_risk = esc(summary.get("biggest_risk") or summary.get("recommendations", [None])[0] if summary.get("recommendations") else "")
+            notable_trend = esc(summary.get("notable_trend") or (summary.get("key_insights", []) or [None])[1] if len(summary.get("key_insights", [])) > 1 else summary.get("overview"))
+            st.markdown(f"""
+            <div class="insight-grid">
+                <div class="insight-card priority"><div class="kpi-label" style="color: var(--accent-purple);">{t("top_finding")}</div><div style="font-size: 0.9rem; margin-top: 8px;">{top_finding}</div></div>
+                <div class="insight-card"><div class="kpi-label">{t("biggest_risk")}</div><div style="font-size: 0.9rem; margin-top: 8px;">{biggest_risk or "—"}</div></div>
+                <div class="insight-card"><div class="kpi-label">{t("notable_trend")}</div><div style="font-size: 0.9rem; margin-top: 8px;">{notable_trend}</div></div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Chart Studio (always; use result for explain if available)
+        col_types = profile.get("column_types", {})
+        cat_cols = [c for c, t in col_types.items() if t == "categorical"]
+        num_cols = [c for c, t in col_types.items() if t == "numeric"]
+        if not cat_cols:
+            cat_cols = [c for c in df.columns if df[c].dtype == "object" or df[c].nunique() < 50][:8]
+        if not num_cols:
+            num_cols = [c for c in df.columns if df[c].dtype in ("int64", "float64")][:8]
+        x_opts = cat_cols or list(df.columns)[:5]
+        y_opts = num_cols or list(df.columns)[:5]
+        st.markdown(f'<h2 class="section-title">{t("chart_studio")}</h2>', unsafe_allow_html=True)
+        mode_sel = st.radio("Mode", [t("exec"), t("analyst"), t("story")], horizontal=True, key="analyst_mode", label_visibility="collapsed")
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            chart_type = st.selectbox("Type", ["Bar Chart", "Line Chart", "Pie Chart"], key="chart_type")
+        with c2:
+            chart_x = st.selectbox("X", x_opts, key="chart_x")
+        with c3:
+            chart_y = st.selectbox("Y", y_opts, key="chart_y")
+        with c4:
+            st.markdown("<br>", unsafe_allow_html=True)
+            regen = st.button(t("regen"), key="chart_regen")
+        type_map = {"bar chart": "bar", "line chart": "line", "pie chart": "pie"}
+        chart_spec = {"chart_type": type_map.get(chart_type.lower(), "bar"), "x_column": chart_x, "y_column": chart_y, "title": f"{chart_y} by {chart_x}"}
+        fig = render_chart_fig(df, chart_spec, st.session_state.theme == "dark")
+        st.markdown('<div class="chart-area">', unsafe_allow_html=True)
+        if fig is not None:
+            st.plotly_chart(fig, use_container_width=True, key="chart_studio_main")
+        else:
+            st.markdown(f'<div class="chart-frame" style="height:300px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);">{t("chart_not_available")}</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+        explain_text = ""
+        if result and result.get("summary"):
+            explain_text = html.escape(str(result["summary"].get("overview", ""))[:300])
+        st.markdown(f'<div class="explain-panel"><strong>{t("ai_insight")}</strong> {explain_text or "—"}</div>', unsafe_allow_html=True)
+
+        # Data Preview (inside main_rail, fixed-height scroll)
+        preview_df = df.head(50)
+        thead = "".join(f"<th>{html.escape(str(c))}</th>" for c in preview_df.columns)
+        trows = "".join("<tr>" + "".join(f"<td>{html.escape(str(row[c]))}</td>" for c in preview_df.columns) + "</tr>" for _, row in preview_df.iterrows())
         st.markdown(f"""
         <div class="glass-panel">
-            <div class="summary-block"><h4>{t("overview")}</h4><p>{overview_p}</p></div>
-            <div class="summary-block"><h4>{t("key_insights")}</h4><ul>{insights_html}</ul></div>
-            <div class="summary-block"><h4>{t("recommendations")}</h4><ul>{recs_html}</ul></div>
-            <div class="summary-block"><h4>{t("final_summary")}</h4><p>{final_p}</p></div>
+            <h2 class="section-title">{t("data_preview")}</h2>
+            <div class="table-scroll-viewport">
+                <table><thead><tr>{thead}</tr></thead><tbody>{trows}</tbody></table>
+            </div>
         </div>
         """, unsafe_allow_html=True)
+        # Export row
+        st.markdown(f"""
+        <div class="export-row">
+            <div class="tag">{t("last_sync")}</div>
+            <div style="display: flex; gap: 12px;"></div>
+        </div>
+        """, unsafe_allow_html=True)
+        e1, e2, _ = st.columns(3)
+        with e1:
+            st.download_button(t("export_csv"), df.to_csv(index=False).encode("utf-8"), file_name=uploaded_file.name or "data.csv", mime="text/csv", key="dl_csv")
+        with e2:
+            rep = (result.get("summary", {}) if result else {}) or {}
+            rep_text = f"# Executive Report\n\n{rep.get('overview', '')}\n\n## Key insights\n" + "\n".join(f"- {x}" for x in rep.get("key_insights", []))
+            st.download_button(t("gen_report"), rep_text.encode("utf-8"), file_name="executive_report.md", mime="text/markdown", key="dl_report")
 
-        # Visualizations: each chart in its own column; column = card (chart renders inside)
-        st.markdown(f'<h2 class="section-title">{t("visualizations")}</h2>', unsafe_allow_html=True)
-        chart_cols = st.columns(2)
-        for i, chart in enumerate(charts):
-            with chart_cols[i % 2]:
-                title_esc = html.escape(chart.get("title", "Chart"))
-                st.markdown(f'<div class="chart-card-title">{title_esc}</div>', unsafe_allow_html=True)
-                fig = render_chart_fig(df, chart, st.session_state.theme == "dark")
-                if fig is not None:
-                    st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
-                else:
-                    st.markdown(f'<div class="chart-placeholder">{t("chart_not_available")}</div>', unsafe_allow_html=True)
+    with right_rail:
+        st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("session_memory")}</h2><div class="sidebar-list">', unsafe_allow_html=True)
+        for msg in st.session_state.chat_history[-6:]:
+            who = "user" if msg["role"] == "user" else "assistant"
+            snip = (msg["content"][:60] + "…") if len(msg["content"]) > 60 else msg["content"]
+            st.markdown(f'<div class="history-item"><div style="opacity:0.6;font-size:0.7rem;">{who}</div>{html.escape(snip)}</div>', unsafe_allow_html=True)
+        st.markdown("</div></div>", unsafe_allow_html=True)
+        cat_cols_r = [c for c, t in profile.get("column_types", {}).items() if t == "categorical"] or list(df.columns)[:3]
+        st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("segment_compare")}</h2><div class="kpi-label">{t("primary_segment")}</div>', unsafe_allow_html=True)
+        seg_primary = st.selectbox("Primary", options=cat_cols_r, key="seg_primary", label_visibility="collapsed")
+        st.markdown(f'<div class="kpi-label">{t("compare_against")}</div>', unsafe_allow_html=True)
+        seg_compare = st.selectbox("Compare", options=["Global Average"] + cat_cols_r, key="seg_compare", label_visibility="collapsed")
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("suggested_q")}</h2><div class="suggested-chips">', unsafe_allow_html=True)
+        for i, q in enumerate([t("q_top_revenue"), t("q_region_growth"), t("q_anomalies")]):
+            if st.button(q, key=f"right_sug_{i}"):
+                st.session_state.pending_question = q
+                st.rerun()
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
     # Chat: process suggested-question click first
     if st.session_state.pending_question:
