@@ -64,6 +64,37 @@ TRANSLATIONS = {
         "data_quality": "Data quality",
         "duplicates": "Duplicates",
         "missing_vals": "Missing",
+        "studio": "Studio",
+        "data_health": "Data Health",
+        "readiness": "Readiness Score",
+        "null_pct": "Null %",
+        "dataset_profiling": "Dataset Profiling",
+        "rec_measures": "Recommended Measures",
+        "business_lens": "Business Lens",
+        "quality_metrics": "Quality & Shape Metrics",
+        "integrity": "Integrity Score",
+        "usable_cols": "Usable Columns",
+        "missing_cells": "Missing Cells",
+        "top_finding": "Top Finding",
+        "biggest_risk": "Biggest Risk",
+        "notable_trend": "Notable Trend",
+        "chart_studio": "Chart Studio",
+        "regen": "Regenerate",
+        "ai_insight": "AI Insight",
+        "session_memory": "Session Memory",
+        "segment_compare": "Segment Compare",
+        "primary_segment": "Primary Segment",
+        "compare_against": "Compare Against",
+        "suggested_q": "Suggested Questions",
+        "last_sync": "Last sync",
+        "export_csv": "Export CSV",
+        "gen_report": "Generate Executive Report",
+        "exec": "Exec",
+        "analyst": "Analyst",
+        "story": "Story",
+        "finance_lens": "Finance & Growth",
+        "ops_lens": "Operations Efficiency",
+        "sales_lens": "Sales Performance",
     },
     "ar": {
         "app_title": "وكيل تحليل البيانات بالذكاء الاصطناعي",
@@ -165,7 +196,7 @@ if "lang" not in st.session_state:
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
 if "business_lens" not in st.session_state:
-    st.session_state.business_lens = "Finance & Growth"
+    st.session_state.business_lens = None  # will be set by widget; do not assign after widget
 if "analyst_mode" not in st.session_state:
     st.session_state.analyst_mode = "Exec"
 if "chart_studio_type" not in st.session_state:
@@ -687,23 +718,28 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .hero h1 {{ font-size: 2rem; font-weight: 600; color: {text_primary} !important; }}
 .hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 1rem; max-width: 600px; line-height: 1.5; }}
 
-/* Variant: grid-main three-column 320px 1fr 320px */
-.grid-main {{
-    display: grid;
-    grid-template-columns: 320px 1fr 320px;
-    gap: 24px;
-    align-items: start;
+/* Variant: grid-main three-column – stable sidebar widths, no collapse */
+.grid-main-marker + [data-testid="stHorizontalBlock"] {{
+    display: grid !important;
+    grid-template-columns: minmax(280px, 1fr) minmax(400px, 2.5fr) minmax(280px, 1fr) !important;
+    gap: 24px !important;
+    align-items: start !important;
 }}
-@media (max-width: 1200px) {{ .grid-main {{ grid-template-columns: 1fr; }} }}
+.grid-main-marker + [data-testid="stHorizontalBlock"] > div {{
+    min-width: 0 !important;
+}}
+@media (max-width: 1100px) {{
+    .grid-main-marker + [data-testid="stHorizontalBlock"] {{ grid-template-columns: 1fr !important; }}
+}}
 
-/* Variant: section-title 0.75rem uppercase letter-spacing 0.1em */
+/* Variant: section-title – readable title case, no broken wrap */
 .section-title {{
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 700;
     margin-bottom: 20px;
     color: {text_secondary} !important;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
 }}
 
 /* Variant: stats-row, kpi-card */
@@ -1267,6 +1303,7 @@ try:
     rec_tags = "".join(f'<span class="tag highlight">{m}</span>' for m in rec_measures) or '<span class="tag">—</span>'
     type_tags = f'<span class="tag"># Numeric ({num_count})</span><span class="tag">A Categorical ({cat_count})</span><span class="tag">📅 Datetime ({dt_count})</span>'
     health_tags = "".join(f'<div class="tag">{html.escape(s)}</div>' for s in profile.get("quality_signals", ["—"])[:2])
+    st.markdown('<div class="grid-main-marker" aria-hidden="true"></div>', unsafe_allow_html=True)
     left_rail, main_rail, right_rail = st.columns([1, 2.5, 1])
 
     with left_rail:
@@ -1291,9 +1328,11 @@ try:
             <h2 class="section-title">{t("business_lens")}</h2>
         </div>
         """, unsafe_allow_html=True)
-        st.session_state.business_lens = st.selectbox(
-            "Lens", options=[t("finance_lens"), t("ops_lens"), t("sales_lens")],
-            index=0, key="business_lens", label_visibility="collapsed"
+        lens_options = [t("finance_lens"), t("ops_lens"), t("sales_lens")]
+        current_lens = st.session_state.get("business_lens")
+        lens_index = lens_options.index(current_lens) if current_lens in lens_options else 0
+        st.selectbox(
+            "Lens", options=lens_options, index=lens_index, key="business_lens", label_visibility="collapsed"
         )
 
     with main_rail:
