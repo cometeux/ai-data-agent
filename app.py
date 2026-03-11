@@ -55,6 +55,15 @@ TRANSLATIONS = {
         "chart_not_available": "Chart not available",
         "analyzing": "Analyzing data...",
         "file_meta": "{size} MB • {rows:,} rows",
+        "suggested_questions": "Suggested questions",
+        "q_top_revenue": "Top 5 rows by revenue",
+        "q_region_growth": "Which region has the most growth?",
+        "q_trends": "What are the main trends?",
+        "q_anomalies": "Any anomalies or outliers?",
+        "q_recommend": "What do you recommend?",
+        "data_quality": "Data quality",
+        "duplicates": "Duplicates",
+        "missing_vals": "Missing",
     },
     "ar": {
         "app_title": "وكيل تحليل البيانات بالذكاء الاصطناعي",
@@ -92,6 +101,15 @@ TRANSLATIONS = {
         "chart_not_available": "الرسم غير متوفر",
         "analyzing": "جاري التحليل...",
         "file_meta": "{size} ميجابايت • {rows:,} صف",
+        "suggested_questions": "أسئلة مقترحة",
+        "q_top_revenue": "أعلى 5 صفوف حسب الإيرادات",
+        "q_region_growth": "أي منطقة لديها أكبر نمو؟",
+        "q_trends": "ما الاتجاهات الرئيسية؟",
+        "q_anomalies": "أي شذوذ أو قيم متطرفة؟",
+        "q_recommend": "ماذا توصي؟",
+        "data_quality": "جودة البيانات",
+        "duplicates": "التكرارات",
+        "missing_vals": "القيم المفقودة",
     },
 }
 
@@ -114,6 +132,8 @@ if "theme" not in st.session_state:
     st.session_state.theme = "dark"
 if "lang" not in st.session_state:
     st.session_state.lang = "en"
+if "pending_question" not in st.session_state:
+    st.session_state.pending_question = None
 
 
 # -----------------------------
@@ -148,33 +168,136 @@ def infer_data_types(df):
     return ", ".join(sorted(kinds)) if kinds else "Mixed"
 
 
-def ask_agent_for_analysis(df):
+def profile_dataframe(df):
+    """Smart dataset profiling: missing, duplicates, types, numeric stats, quality signals."""
+    profile = {
+        "missing_pct": {},
+        "missing_total": 0,
+        "duplicate_rows": int(df.duplicated().sum()),
+        "total_rows": len(df),
+        "column_types": {},
+        "numeric_stats": {},
+        "unique_counts": {},
+        "quality_signals": [],
+    }
+    for col in df.columns:
+        null_count = df[col].isna().sum()
+        pct = round(100 * null_count / len(df), 1) if len(df) else 0
+        profile["missing_pct"][col] = pct
+        profile["missing_total"] += null_count
+        profile["unique_counts"][col] = int(df[col].nunique())
+        dtype = str(df[col].dtype)
+        if "int" in dtype or "float" in dtype:
+            profile["column_types"][col] = "numeric"
+            profile["numeric_stats"][col] = {
+                "min": df[col].min(),
+                "max": df[col].max(),
+                "mean": round(df[col].mean(), 2) if df[col].notna().any() else None,
+            }
+        elif "datetime" in dtype:
+            profile["column_types"][col] = "datetime"
+        else:
+            profile["column_types"][col] = "categorical"
+    if profile["duplicate_rows"] > 0:
+        profile["quality_signals"].append(f"Duplicate rows: {profile['duplicate_rows']}")
+    high_missing = [c for c, p in profile["missing_pct"].items() if p > 20]
+    if high_missing:
+        profile["quality_signals"].append(f"High missing (>20%): {', '.join(high_missing[:3])}{'...' if len(high_missing) > 3 else ''}")
+    return profile
+
+
+def parse_analysis_json(text):
+    """Extract and parse JSON from model output with fallbacks."""
+    text = (text or "").strip()
+    if not text:
+        return None
+    # Try to find JSON block
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    end = -1
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    if end == -1:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        pass
+    # Fallback: minimal valid structure
+    return {
+        "summary": {
+            "overview": "Analysis could not be parsed. Please try again.",
+            "key_insights": [],
+            "recommendations": [],
+            "final_summary": "",
+        },
+        "charts": [],
+    }
+
+
+def ask_agent_for_analysis(df, profile=None):
     columns = list(df.columns)
     dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
-    sample_rows = df.head(10).to_dict(orient="records")
-    prompt = f"""
-You are a professional data analysis AI agent.
-Analyze the uploaded dataset and return ONLY valid JSON.
-Dataset columns: {columns}
-Dataset types: {dtypes}
-Sample rows: {sample_rows}
-Return JSON in exactly this structure:
+    sample_rows = df.head(15).to_dict(orient="records")
+    for row in sample_rows:
+        for k, v in row.items():
+            if hasattr(v, "isoformat"):
+                row[k] = v.isoformat()
+    profile = profile or profile_dataframe(df)
+    prompt = f"""You are a professional data analysis AI agent. Analyze this dataset and return ONLY valid JSON, no markdown or explanation.
+
+COLUMNS (use these exact names): {columns}
+DTYPES: {dtypes}
+SAMPLE (first 15 rows): {json.dumps(sample_rows, default=str)}
+DATA QUALITY: duplicate_rows={profile['duplicate_rows']}, high_missing_columns={[c for c, p in profile['missing_pct'].items() if p > 10]}.
+
+Return exactly this JSON structure (no other text):
 {{
   "summary": {{
-    "overview": "brief overview of the dataset",
+    "overview": "2-3 sentence overview of the dataset and what it contains",
     "key_insights": ["insight 1", "insight 2", "insight 3"],
-    "recommendations": ["recommendation 1", "recommendation 2"],
-    "final_summary": "clear professional final summary"
+    "recommendations": ["actionable recommendation 1", "recommendation 2"],
+    "final_summary": "one sentence executive conclusion"
   }},
   "charts": [
-    {{ "title": "chart title", "chart_type": "bar", "x_column": "exact column name", "y_column": "exact column name", "aggregation": "sum" }},
-    {{ "title": "chart title", "chart_type": "line", "x_column": "exact column name", "y_column": "exact column name", "aggregation": "mean" }}
+    {{ "title": "Chart title", "chart_type": "bar", "x_column": "exact_column_name", "y_column": "exact_column_name", "aggregation": "sum" }},
+    {{ "title": "Chart title", "chart_type": "line", "x_column": "exact_column_name", "y_column": "exact_column_name", "aggregation": "mean" }}
   ]
 }}
-Rules: Return at least 2 charts; chart_type: bar, line, pie, scatter; aggregation: sum, mean, count, none; use exact column names; keep summary concise.
-"""
-    response = client.responses.create(model="gpt-4.1-mini", input=prompt)
-    return json.loads(response.output_text)
+RULES: Use ONLY column names from the list above. chart_type: bar, line, pie, scatter. aggregation: sum, mean, count, none. Return at least 2 charts. x_column and y_column must exist in columns. Output only the JSON object."""
+    try:
+        response = client.responses.create(model="gpt-4.1-mini", input=prompt)
+        raw = (response.output_text or "").strip()
+        result = parse_analysis_json(raw)
+        if not result:
+            result = {"summary": {"overview": "Analysis unavailable.", "key_insights": [], "recommendations": [], "final_summary": ""}, "charts": []}
+        # Validate charts: only keep those with existing columns
+        valid_cols = set(df.columns)
+        valid_charts = []
+        for ch in result.get("charts", []):
+            x, y = ch.get("x_column"), ch.get("y_column")
+            if x in valid_cols and (y in valid_cols or ch.get("aggregation") == "count"):
+                valid_charts.append(ch)
+        result["charts"] = valid_charts if valid_charts else result.get("charts", [])[:2]
+        return result
+    except Exception as e:
+        return {
+            "summary": {
+                "overview": f"Analysis could not be completed: {str(e)[:200]}.",
+                "key_insights": [],
+                "recommendations": [],
+                "final_summary": "",
+            },
+            "charts": [],
+        }
 
 
 def ask_agent_question(df, analysis_result, user_question):
@@ -610,8 +733,16 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .dropzone h3, .dropzone-outer h3 {{ font-weight: 500; margin-bottom: 8px; font-size: 1rem; }}
 .dropzone p, .dropzone-outer p {{ color: {text_secondary}; font-size: 0.9rem; }}
-/* Uploader: keep inside container, no overflow */
-.uploader-wrap {{ width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }}
+/* Data Source: style the Streamlit block that CONTAINS the file uploader as the glass card (widget stays inside) */
+.block-container > div > [data-testid="stVerticalBlock"]:has([data-testid="stFileUploader"]) {{
+    background: {glass_panel} !important;
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid {border_subtle};
+    border-radius: 24px;
+    box-shadow: {shadow_glass};
+    padding: 32px !important;
+}}
 [data-testid="stFileUploader"] {{
     background: transparent !important; border: none !important; padding: 0 !important;
     width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
@@ -619,9 +750,11 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 [data-testid="stFileUploader"] section {{ max-width: 100% !important; }}
 [data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-weight: 500 !important; }}
 
-/* Design dashboard-grid, overview-card */
-.dashboard-grid {{ display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }}
+/* Design dashboard-grid: balanced row, align top */
+.dashboard-grid {{ display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start; }}
 .overview-card {{ display: flex; flex-direction: column; gap: 12px; }}
+.dashboard-grid .kpi-card {{ min-height: 0; }}
+.dashboard-grid .kpi-value {{ margin-top: 4px; }}
 @media (max-width: 900px) {{ .dashboard-grid {{ grid-template-columns: 1fr; }} }}
 
 /* Design ref-list-item, ref-icon-box, ref-text-box */
@@ -678,7 +811,15 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     color: {text_primary} !important;
 }}
 
-/* Design table-container */
+/* Data Preview: fixed-height scrollable table so page doesn't grow too long */
+.table-scroll-viewport {{
+    width: 100%;
+    max-height: 380px;
+    overflow: auto;
+    border-radius: 16px;
+    border: 1px solid {border_card};
+    background: transparent;
+}}
 .table-container, .table-wrap {{
     width: 100%;
     overflow-x: auto;
@@ -686,7 +827,9 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border: 1px solid {border_card};
     background: transparent;
 }}
-.table-container table, .table-wrap table {{ width: 100%; border-collapse: collapse; text-align: left; }}
+.table-scroll-viewport table, .table-container table, .table-wrap table {{ width: 100%; border-collapse: collapse; text-align: left; }}
+.table-scroll-viewport th {{ position: sticky; top: 0; z-index: 1; background: {th_bg} !important; }}
+.table-scroll-viewport th, .table-scroll-viewport td {{ padding: 12px 16px; font-size: 0.875rem; }}
 .table-container th, .table-wrap th {{
     color: {text_secondary} !important;
     font-weight: 500;
@@ -728,21 +871,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 /* Design analysis-section */
 .analysis-section {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }}
 
-/* Design charts-grid, chart-card */
-.charts-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }}
-.chart-card {{
-    background: transparent;
-    border-radius: 16px;
+/* Charts: style the column that CONTAINS the Plotly chart as the card (chart renders inside) */
+.block-container [data-testid="column"]:has([data-testid="stPlotlyChart"]) {{
+    background: {glass_panel} !important;
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
     border: 1px solid {border_card};
-    padding: 24px;
-    min-height: 300px;
-    display: flex;
-    flex-direction: column;
+    border-radius: 16px;
+    padding: 24px !important;
+    min-height: 320px;
 }}
-.chart-header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }}
-.chart-title {{ font-weight: 500; font-size: 0.95rem; color: {text_primary} !important; }}
+.chart-card-title {{ font-weight: 500; font-size: 0.95rem; color: {text_primary} !important; margin-bottom: 16px; }}
 .chart-placeholder {{
-    flex: 1;
+    min-height: 260px;
     border-radius: 8px;
     border: 1px dashed rgba(255,255,255,0.1);
     display: flex;
@@ -757,25 +898,28 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     .kpi-grid {{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }}
 }}
 
-/* Design chat-console */
-.chat-section-label {{ font-size: 0.85rem; font-weight: 600; color: {text_secondary}; margin-bottom: 12px; margin-top: 40px; }}
+/* Floating AI bar: slim, elegant command bar (not oversized) */
+.chat-section-label {{ font-size: 0.85rem; font-weight: 600; color: {text_secondary}; margin-bottom: 8px; margin-top: 32px; }}
+.suggested-questions {{ display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }}
+.suggested-questions button {{ font-size: 0.8125rem; padding: 8px 14px; border-radius: 20px; }}
 [data-testid="stChatInput"] {{
     position: sticky !important;
     bottom: 24px !important;
-    margin-top: 40px !important;
+    margin-top: 24px !important;
     background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
-    backdrop-filter: blur(40px) !important;
-    -webkit-backdrop-filter: blur(40px) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    border-radius: 16px !important;
-    padding: 16px 24px !important;
-    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5) !important;
+    border-radius: 24px !important;
+    padding: 12px 20px !important;
+    min-height: 52px !important;
+    box-shadow: 0 6px 24px rgba(139, 92, 246, 0.4) !important;
     display: flex !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 12px !important;
 }}
-[data-testid="stChatInput"] input {{ flex: 1; background: transparent; border: none; color: #FFFFFF !important; font-size: 1rem !important; outline: none; }}
-[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.9); font-weight: 500; }}
+[data-testid="stChatInput"] input {{ flex: 1; background: transparent; border: none; color: #FFFFFF !important; font-size: 0.9375rem !important; outline: none; min-height: 28px !important; }}
+[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.85); font-weight: 500; }}
 [data-testid="stChatMessage"] {{ color: {text_primary} !important; }}
 
 .summary-block {{ margin-bottom: 20px; }}
@@ -856,14 +1000,15 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Data Source (uploader wrapped to prevent overflow)
-st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("data_source")}</h2><div class="dropzone-outer uploader-wrap">', unsafe_allow_html=True)
-uploaded_file = st.file_uploader(
-    t("drag_drop") + " — " + t("supports"),
-    type=["csv", "xlsx"],
-    label_visibility="collapsed"
-)
-st.markdown("</div></div>", unsafe_allow_html=True)
+# Data Source: one container = one card. Title + uploader render INSIDE the same block; CSS styles that block as glass panel.
+with st.container():
+    st.markdown(f'<h2 class="section-title">{t("data_source")}</h2>', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader(
+        t("drag_drop") + " — " + t("supports"),
+        type=["csv", "xlsx"],
+        label_visibility="collapsed",
+        key="main_uploader"
+    )
 
 if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
@@ -881,8 +1026,11 @@ try:
     size_mb = file_size_mb(uploaded_file)
     n_rows, n_cols = df.shape
     preview_n = min(100, n_rows)
+    profile = profile_dataframe(df)
+    dup_count = profile["duplicate_rows"]
+    missing_note = str(profile["missing_total"]) if profile["missing_total"] > 0 else "—"
 
-    # Dashboard grid
+    # Dashboard grid: compact overview + balanced KPI row
     st.markdown(f"""
     <div class="dashboard-grid">
         <div class="glass-panel overview-card">
@@ -892,7 +1040,7 @@ try:
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                 </div>
                 <div class="ref-text-box">
-                    <div class="ref-title">{uploaded_file.name}</div>
+                    <div class="ref-title">{html.escape(uploaded_file.name)}</div>
                     <div class="ref-subtitle">{t("file_meta").format(size=size_mb, rows=n_rows)}</div>
                 </div>
             </div>
@@ -903,6 +1051,15 @@ try:
                 <div class="ref-text-box">
                     <div class="ref-title">{t("data_type")}</div>
                     <div class="ref-subtitle">{data_types_str}</div>
+                </div>
+            </div>
+            <div class="ref-list-item">
+                <div class="ref-icon-box" style="color: #94A3B8;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div class="ref-text-box">
+                    <div class="ref-title">{t("data_quality")}</div>
+                    <div class="ref-subtitle">{t("duplicates")}: {dup_count} · {t("missing_vals")}: {missing_note}</div>
                 </div>
             </div>
         </div>
@@ -926,16 +1083,16 @@ try:
     </div>
     """, unsafe_allow_html=True)
 
-    # Data Preview table
-    preview_df = df.head(10)
-    thead = "".join(f"<th>{c}</th>" for c in preview_df.columns)
+    # Data Preview: fixed-height scrollable table inside one glass panel (no detached table)
+    preview_df = df.head(50)
+    thead = "".join(f"<th>{html.escape(str(c))}</th>" for c in preview_df.columns)
     trows = ""
     for _, row in preview_df.iterrows():
-        trows += "<tr>" + "".join(f"<td>{row[c]}</td>" for c in preview_df.columns) + "</tr>"
+        trows += "<tr>" + "".join(f"<td>{html.escape(str(row[c]))}</td>" for c in preview_df.columns) + "</tr>"
     st.markdown(f"""
     <div class="glass-panel">
         <h2 class="section-title">{t("data_preview")}</h2>
-        <div class="table-container">
+        <div class="table-scroll-viewport">
             <table><thead><tr>{thead}</tr></thead><tbody>{trows}</tbody></table>
         </div>
     </div>
@@ -945,7 +1102,8 @@ try:
     st.markdown('<div class="cta-container">', unsafe_allow_html=True)
     if st.button(t("generate_summary_short")):
         with st.spinner(t("analyzing")):
-            st.session_state.analysis_result = ask_agent_for_analysis(df)
+            profile = profile_dataframe(df)
+            st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -1000,36 +1158,59 @@ try:
         </div>
         """, unsafe_allow_html=True)
 
-        # Summary content (escape for HTML)
+        # Summary content inside same panel (no detached blocks)
         def esc(s):
             return html.escape(str(s)) if s else ""
-        st.markdown(f'<div class="summary-block"><h4>{t("overview")}</h4><p>{esc(summary.get("overview"))}</p></div>', unsafe_allow_html=True)
+        overview_p = esc(summary.get("overview"))
         insights_html = "".join(f"<li>{esc(item)}</li>" for item in summary.get("key_insights", []))
-        st.markdown(f'<div class="summary-block"><h4>{t("key_insights")}</h4><ul>{insights_html}</ul></div>', unsafe_allow_html=True)
         recs_html = "".join(f"<li>{esc(item)}</li>" for item in summary.get("recommendations", []))
-        st.markdown(f'<div class="summary-block"><h4>{t("recommendations")}</h4><ul>{recs_html}</ul></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="summary-block"><h4>{t("final_summary")}</h4><p>{esc(summary.get("final_summary"))}</p></div>', unsafe_allow_html=True)
+        final_p = esc(summary.get("final_summary"))
+        st.markdown(f"""
+        <div class="glass-panel">
+            <div class="summary-block"><h4>{t("overview")}</h4><p>{overview_p}</p></div>
+            <div class="summary-block"><h4>{t("key_insights")}</h4><ul>{insights_html}</ul></div>
+            <div class="summary-block"><h4>{t("recommendations")}</h4><ul>{recs_html}</ul></div>
+            <div class="summary-block"><h4>{t("final_summary")}</h4><p>{final_p}</p></div>
+        </div>
+        """, unsafe_allow_html=True)
 
-        # Visualizations
-        st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("visualizations")}</h2><div class="charts-grid">', unsafe_allow_html=True)
-        cols = st.columns(2)
+        # Visualizations: each chart in its own column; column = card (chart renders inside)
+        st.markdown(f'<h2 class="section-title">{t("visualizations")}</h2>', unsafe_allow_html=True)
+        chart_cols = st.columns(2)
         for i, chart in enumerate(charts):
-            with cols[i % 2]:
-                title_esc = chart.get("title", "Chart").replace("<", "&lt;").replace(">", "&gt;")
-                st.markdown(f'<div class="chart-card"><div class="chart-header"><div class="chart-title">{title_esc}</div></div>', unsafe_allow_html=True)
+            with chart_cols[i % 2]:
+                title_esc = html.escape(chart.get("title", "Chart"))
+                st.markdown(f'<div class="chart-card-title">{title_esc}</div>', unsafe_allow_html=True)
                 fig = render_chart_fig(df, chart, st.session_state.theme == "dark")
                 if fig is not None:
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
                 else:
                     st.markdown(f'<div class="chart-placeholder">{t("chart_not_available")}</div>', unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("</div></div>", unsafe_allow_html=True)
 
-    # Chat
+    # Chat: process suggested-question click first
+    if st.session_state.pending_question:
+        q = st.session_state.pending_question
+        st.session_state.pending_question = None
+        st.session_state.chat_history.append({"role": "user", "content": q})
+        with st.spinner("..."):
+            answer = ask_agent_question(df, st.session_state.analysis_result or {}, q)
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+        st.rerun()
+
     st.markdown(f'<div class="chat-section-label">{t("ask_questions")}</div>', unsafe_allow_html=True)
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
+
+    # Suggested follow-up questions (chips)
+    st.markdown(f'<div class="chat-section-label">{t("suggested_questions")}</div>', unsafe_allow_html=True)
+    suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
+    sug_cols = st.columns(5)
+    for i, q in enumerate(suggested_qs):
+        with sug_cols[i % 5]:
+            if st.button(q, key=f"sug_{i}"):
+                st.session_state.pending_question = q
+                st.rerun()
 
     user_question = st.chat_input(t("ask_ai_placeholder"))
     if user_question:
@@ -1037,7 +1218,7 @@ try:
         with st.chat_message("user"):
             st.write(user_question)
         with st.chat_message("assistant"):
-            answer = ask_agent_question(df, result if result else {}, user_question)
+            answer = ask_agent_question(df, st.session_state.analysis_result or {}, user_question)
             st.write(answer)
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
 
