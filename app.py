@@ -10,7 +10,7 @@ st.set_page_config(
     page_title="Data Analysis AI Agent",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
@@ -35,6 +35,7 @@ TRANSLATIONS = {
         "preview_rows": "Preview Rows",
         "data_preview": "Data Preview",
         "generate_summary": "Generate Summary and Charts",
+        "generate_summary_short": "Generate Summary",
         "analysis_summary": "Analysis Summary",
         "overview": "Overview",
         "overview_sub": "General trends and descriptive stats",
@@ -71,6 +72,7 @@ TRANSLATIONS = {
         "preview_rows": "صفوف المعاينة",
         "data_preview": "معاينة البيانات",
         "generate_summary": "إنشاء الملخص والرسوم البيانية",
+        "generate_summary_short": "إنشاء الملخص",
         "analysis_summary": "ملخص التحليل",
         "overview": "نظرة عامة",
         "overview_sub": "الاتجاهات العامة والإحصائيات الوصفية",
@@ -265,10 +267,10 @@ def inject_css(theme, lang):
         dot_opacity = "0.6"
         dot_opacity_2 = "0.4"
     else:
-        bg_base = "#eef2f7"
-        text_primary = "#0c1222"
-        text_secondary = "#334155"
-        glass_panel = "rgba(255, 255, 255, 0.88)"
+        bg_base = "#F8FAFC"
+        text_primary = "#1E293B"
+        text_secondary = "#64748B"
+        glass_panel = "rgba(255, 255, 255, 0.7)"
         border_subtle = "rgba(15, 23, 42, 0.1)"
         border_highlight = "rgba(15, 23, 42, 0.14)"
         border_left_glass = "rgba(15, 23, 42, 0.08)"
@@ -307,65 +309,160 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
-/* Single container: max-width 1100px, consistent padding. No layout hacks. */
+/* Single container: max-width 1100px (design app-container) */
 .block-container {{
     max-width: 1100px !important;
     margin: 0 auto !important;
-    padding: 60px 24px 160px !important;
+    padding: 40px 24px 80px !important;
 }}
 
-/* Sidebar utility bar only - does not affect main content */
-[data-testid="stSidebar"] .stRadio label {{ font-size: 0.8125rem; }}
-[data-testid="stSidebar"] > div {{ padding: 1rem 1rem 0; }}
+/* Navbar (design: sticky, glass, VARAIANT + lang dropdown + theme pill) */
+.navbar {{
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    isolation: isolate;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: {glass_panel};
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid {border_subtle};
+    border-radius: 24px;
+    margin-bottom: 24px;
+}}
+.nav-logo {{
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: {text_primary} !important;
+}}
+.nav-controls {{ display: flex; gap: 20px; align-items: center; }}
+.lang-dropdown {{ position: relative; display: inline-block; }}
+.lang-trigger {{
+    background: transparent;
+    border: 1px solid {border_subtle};
+    color: {text_primary};
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+}}
+.lang-menu {{
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: {glass_panel};
+    backdrop-filter: blur(20px);
+    border: 1px solid {border_subtle};
+    border-radius: 12px;
+    min-width: 140px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.2s;
+    z-index: 101;
+}}
+.lang-dropdown:hover .lang-menu {{ opacity: 1; visibility: visible; transform: translateY(0); }}
+.lang-option {{
+    padding: 10px 16px;
+    display: block;
+    font-size: 0.9rem;
+    color: {text_primary} !important;
+    text-decoration: none;
+    transition: background 0.2s;
+}}
+.lang-option:hover {{ background: rgba(255,255,255,0.08); }}
+.theme-switch-pill {{
+    display: inline-flex;
+    border-radius: 50px;
+    background: {"rgba(255,255,255,0.08)" if is_dark else "rgba(0,0,0,0.05)"};
+    border: 1px solid {border_subtle};
+    padding: 4px;
+    gap: 2px;
+}}
+.theme-option {{
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: {text_secondary} !important;
+    text-decoration: none;
+    transition: all 0.2s;
+}}
+.theme-option:hover {{ color: {text_primary} !important; background: rgba(255,255,255,{"0.08" if is_dark else "0.1"}); }}
+.theme-option.active {{
+    background: {"#fff" if is_dark else "#FBBF24"};
+    color: {"#1E293B" if is_dark else "#1E293B"} !important;
+    box-shadow: 0 0 12px rgba(147, 51, 234, {"0.6" if is_dark else "0.3"});
+}}
 
-/* Design body background: 6 radial gradients, 150px, fixed */
+/* Design: star layers (body::before/after + star-layer-3/4) */
 .stApp::before {{
     content: "";
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    inset: -100px;
     pointer-events: none;
     z-index: 0;
-    background-image: {"radial-gradient(1px 1px at 10% 10%, rgba(255,255,255,0.6) 100%, transparent), radial-gradient(1.5px 1.5px at 80% 20%, rgba(255,255,255,0.4) 100%, transparent), radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.7) 100%, transparent), radial-gradient(2px 2px at 70% 80%, rgba(255,255,255,0.3) 100%, transparent), radial-gradient(1px 1px at 50% 30%, rgba(255,255,255,0.5) 100%, transparent), radial-gradient(1.5px 1.5px at 90% 90%, rgba(255,255,255,0.6) 100%, transparent)" if is_dark else "radial-gradient(1px 1px at 10% 10%, rgba(15,23,42,0.35) 100%, transparent), radial-gradient(1.5px 1.5px at 80% 20%, rgba(15,23,42,0.2) 100%, transparent), radial-gradient(1px 1px at 30% 60%, rgba(15,23,42,0.3) 100%, transparent)"};
-    background-size: 150px 150px;
-    background-attachment: fixed;
+    background-image: radial-gradient(0.5px 0.5px at 20px 30px, rgba(255,255,255,{"0.15" if is_dark else "0.08"}) 100%, transparent);
+    background-size: 80px 80px;
 }}
-[data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
-
-/* Design body::after noise overlay */
 .stApp::after {{
     content: "";
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
+    inset: -100px;
     pointer-events: none;
-    z-index: 9999;
-    opacity: {0.12 if is_dark else 0};
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    mix-blend-mode: overlay;
+    z-index: 0;
+    background-image: radial-gradient(0.5px 0.5px at 50px 100px, rgba(255,255,255,{"0.25" if is_dark else "0.1"}) 100%, transparent);
+    background-size: 150px 150px;
+    transform: translateY(-20px);
 }}
+.star-layer-3 {{
+    position: fixed;
+    inset: -100px;
+    pointer-events: none;
+    z-index: 0;
+    background-image: radial-gradient(0.8px 0.8px at 120px 200px, rgba(255,255,255,{"0.4" if is_dark else "0.15"}) 100%, transparent);
+    background-size: 300px 300px;
+    transform: translateY(-40px);
+}}
+.star-layer-4 {{
+    position: fixed;
+    inset: -100px;
+    pointer-events: none;
+    z-index: 0;
+    background-image: radial-gradient(1px 1px at 250px 400px, rgba(255,255,255,{"0.6" if is_dark else "0.2"}) 100%, transparent);
+    background-size: 550px 550px;
+    transform: translateY(-60px);
+}}
+[data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
 
-/* Light flares (dark only) */
-/* Design light flares */
+/* Light flares (design: 60vw/100vh blur 80px, 30vw/80vh blur 60px) */
 .light-flare-1 {{
     position: fixed;
     top: -10vh; left: 50%;
     transform: translateX(-50%);
-    width: 30vw; height: 90vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(79, 70, 229, 0.4) 0%, transparent 100%);
+    width: 60vw; height: 100vh;
+    background: radial-gradient(circle at center, rgba(79, 70, 229, 0.45) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
-    filter: blur(50px);
+    filter: blur(80px);
 }}
 .light-flare-2 {{
     position: fixed;
     top: -5vh; left: 50%;
     transform: translateX(-50%);
-    width: 8vw; height: 70vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(147, 51, 234, 0.7) 0%, transparent 100%);
+    width: 30vw; height: 80vh;
+    background: radial-gradient(circle at center, rgba(147, 51, 234, 0.45) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
-    filter: blur(30px);
+    filter: blur(60px);
 }}
 
 /* Animations */
@@ -435,17 +532,17 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     align-items: center;
     gap: 8px;
     padding: 6px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid {border_subtle};
     border-radius: 16px;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #E0E7FF;
+    color: {text_primary};
 }}
 .badge svg {{ color: #A855F7; }}
 .hero h1 {{
     font-size: 2.5rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.02em;
     color: {text_primary} !important;
     line-height: 1.2;
@@ -472,16 +569,17 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     transition: all 0.3s ease;
 }}
 .glass-panel:hover {{
-    transform: translateY(-1px);
-    box-shadow: {"0 28px 56px rgba(0,0,0,0.5)" if is_dark else "0 28px 56px rgba(15,23,42,0.14)"};
+    transition: background 0.3s ease, border 0.3s ease;
 }}
 
-/* Design section-title */
+/* Design section-title (uppercase, letter-spacing) */
 .section-title {{
     font-size: 0.85rem;
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 16px;
     color: {text_secondary} !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }}
 
 /* Design dropzone */
@@ -491,15 +589,15 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     align-items: center;
     justify-content: center;
     padding: 40px;
-    border: 1px dashed rgba(255,255,255,0.15);
+    border: 1px dashed {border_subtle};
     border-radius: 16px;
-    background: rgba(255, 255, 255, 0.01);
+    background: rgba(255, 255, 255, 0.02);
     transition: all 0.3s ease;
     text-align: center;
 }}
 .dropzone:hover, .dropzone-outer:hover {{
-    border-color: rgba(168, 85, 247, 0.5);
-    background: rgba(168, 85, 247, 0.05);
+    border-color: #9333EA;
+    background: rgba(147, 51, 234, 0.05);
 }}
 .dropzone-icon {{
     width: 48px; height: 48px;
@@ -686,6 +784,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
+[data-testid="stSidebar"] {{ display: none !important; }}
 {rtl_extra}
 </style>
 """, unsafe_allow_html=True)
@@ -694,20 +793,53 @@ footer {{ visibility: hidden; }}
 # -----------------------------
 # Render
 # -----------------------------
-inject_css(st.session_state.theme, st.session_state.lang)
-
-# Top utility: language + theme in sidebar (keeps main layout untouched)
-with st.sidebar:
-    st.caption("Language")
-    lang = st.radio("Language", options=["en", "ar"], format_func=lambda x: "English" if x == "en" else "العربية", index=0 if st.session_state.lang == "en" else 1, key="lang_radio", label_visibility="collapsed")
-    st.caption("Theme")
-    theme = st.radio("Theme", options=["dark", "light"], format_func=lambda x: "Dark" if x == "dark" else "Light", index=0 if st.session_state.theme == "dark" else 1, key="theme_radio", label_visibility="collapsed")
-if lang != st.session_state.lang or theme != st.session_state.theme:
-    st.session_state.lang = lang
-    st.session_state.theme = theme
+# Sync lang/theme from query params (navbar links)
+qp = st.query_params
+changed = False
+if "lang" in qp and qp["lang"] in ("en", "ar"):
+    st.session_state.lang = qp["lang"]
+    changed = True
+if "theme" in qp and qp["theme"] in ("dark", "light"):
+    st.session_state.theme = qp["theme"]
+    changed = True
+if changed:
+    st.query_params.clear()
     st.rerun()
 
-# Light flares (dark only)
+inject_css(st.session_state.theme, st.session_state.lang)
+
+theme = st.session_state.theme
+lang = st.session_state.lang
+nav_lang_label = "English" if lang == "en" else "العربية"
+nav_theme_dark_active = " active" if theme == "dark" else ""
+nav_theme_light_active = " active" if theme == "light" else ""
+
+# Navbar (sticky, design-fidelity: VARAIANT + lang links + theme pill)
+st.markdown(f"""
+<nav class="navbar">
+    <div class="nav-logo">VARAIANT</div>
+    <div class="nav-controls">
+        <div class="lang-dropdown">
+            <span class="lang-trigger">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                <span>{nav_lang_label}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"></path></svg>
+            </span>
+            <div class="lang-menu">
+                <a href="?lang=en" class="lang-option">English</a>
+                <a href="?lang=ar" class="lang-option">العربية</a>
+            </div>
+        </div>
+        <div class="theme-switch-pill">
+            <a href="?theme=dark" class="theme-option{nav_theme_dark_active}">Dark</a>
+            <a href="?theme=light" class="theme-option{nav_theme_light_active}">Light</a>
+        </div>
+    </div>
+</nav>
+""", unsafe_allow_html=True)
+
+# Star layers (both themes) + light flares (dark only)
+st.markdown('<div class="star-layer-3"></div><div class="star-layer-4"></div>', unsafe_allow_html=True)
 if st.session_state.theme == "dark":
     st.markdown('<div class="light-flare-1"></div><div class="light-flare-2"></div>', unsafe_allow_html=True)
 
@@ -811,7 +943,7 @@ try:
 
     # CTA
     st.markdown('<div class="cta-container">', unsafe_allow_html=True)
-    if st.button(t("generate_summary")):
+    if st.button(t("generate_summary_short")):
         with st.spinner(t("analyzing")):
             st.session_state.analysis_result = ask_agent_for_analysis(df)
         st.rerun()
