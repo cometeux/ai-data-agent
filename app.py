@@ -265,17 +265,17 @@ def inject_css(theme, lang):
         dot_opacity = "0.6"
         dot_opacity_2 = "0.4"
     else:
-        bg_base = "#f1f5f9"
-        text_primary = "#0f172a"
-        text_secondary = "#475569"
-        glass_panel = "rgba(255, 255, 255, 0.82)"
-        border_subtle = "rgba(15, 23, 42, 0.08)"
-        border_highlight = "rgba(15, 23, 42, 0.12)"
-        border_left_glass = "rgba(15, 23, 42, 0.06)"
-        border_card = "rgba(15, 23, 42, 0.1)"
-        th_bg = "rgba(15, 23, 42, 0.04)"
-        td_border = "rgba(15, 23, 42, 0.06)"
-        shadow_glass = "0 24px 48px rgba(15, 23, 42, 0.12)"
+        bg_base = "#eef2f7"
+        text_primary = "#0c1222"
+        text_secondary = "#334155"
+        glass_panel = "rgba(255, 255, 255, 0.88)"
+        border_subtle = "rgba(15, 23, 42, 0.1)"
+        border_highlight = "rgba(15, 23, 42, 0.14)"
+        border_left_glass = "rgba(15, 23, 42, 0.08)"
+        border_card = "rgba(15, 23, 42, 0.12)"
+        th_bg = "rgba(15, 23, 42, 0.05)"
+        td_border = "rgba(15, 23, 42, 0.08)"
+        shadow_glass = "0 24px 48px rgba(15, 23, 42, 0.1)"
         dot_opacity = "0.35"
         dot_opacity_2 = "0.2"
 
@@ -303,17 +303,52 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     font-family: {"'IBM Plex Sans Arabic', 'Inter', sans-serif" if lang == "ar" else "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"} !important;
     background-color: {bg_base} !important;
     color: {text_primary} !important;
-    line-height: 1.5;
+    line-height: {"1.6" if lang == "ar" else "1.5"};
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
+/* Spacing scale: 8 16 24 32 40 48 60 */
 .block-container {{
     max-width: 1100px !important;
     margin: 0 auto !important;
-    padding: 48px 24px 140px !important;
+    padding: 40px 24px 160px !important;
 }}
 
-/* Dot grid background */
+/* Utility bar: first row = pill controls (target Streamlit first row) */
+.block-container > div:first-of-type {{
+    display: flex !important; align-items: center !important; justify-content: flex-end !important;
+    gap: 12px !important; margin-bottom: 32px !important; flex-wrap: wrap !important;
+}}
+.block-container > div:first-of-type > div:nth-child(2),
+.block-container > div:first-of-type > div:nth-child(3),
+.block-container > div:first-of-type > div:nth-child(4),
+.block-container > div:first-of-type > div:nth-child(5) {{
+    display: inline-flex !important; border-radius: 14px !important; overflow: hidden !important;
+    border: 1px solid {border_card} !important;
+    background: rgba(255,255,255,{"0.05" if is_dark else "0.08"}) !important;
+}}
+.block-container > div:first-of-type .stButton {{ margin: 0 !important; }}
+.block-container > div:first-of-type .stButton button {{
+    margin: 0 !important; border-radius: 0 !important; border: none !important;
+    background: transparent !important; color: {text_secondary} !important;
+    font-size: 0.8125rem !important; font-weight: 500 !important;
+    padding: 10px 18px !important; box-shadow: none !important;
+    min-height: auto !important; height: auto !important;
+    transition: all 0.2s ease !important;
+}}
+.block-container > div:first-of-type > div:nth-child(2) .stButton button {{ border-radius: 12px 0 0 12px !important; }}
+.block-container > div:first-of-type > div:nth-child(3) .stButton button {{ border-radius: 0 12px 12px 0 !important; }}
+.block-container > div:first-of-type > div:nth-child(4) .stButton button {{ border-radius: 12px 0 0 12px !important; }}
+.block-container > div:first-of-type > div:nth-child(5) .stButton button {{ border-radius: 0 12px 12px 0 !important; }}
+.block-container > div:first-of-type > div:nth-child(2) {{ border-right: none !important; border-radius: 14px 0 0 14px !important; }}
+.block-container > div:first-of-type > div:nth-child(3) {{ border-left: none !important; border-radius: 0 14px 14px 0 !important; margin-left: -1px !important; }}
+.block-container > div:first-of-type > div:nth-child(4) {{ border-right: none !important; border-radius: 14px 0 0 14px !important; }}
+.block-container > div:first-of-type > div:nth-child(5) {{ border-left: none !important; border-radius: 0 14px 14px 0 !important; margin-left: -1px !important; }}
+.block-container > div:first-of-type .stButton button:hover {{ color: {text_primary} !important; background: rgba(255,255,255,{"0.08" if is_dark else "0.12"}) !important; }}
+.block-container > div:first-of-type > div:nth-child({"2" if lang == "en" else "3"}) .stButton button,
+.block-container > div:first-of-type > div:nth-child({"4" if theme == "dark" else "5"}) .stButton button {{ background: linear-gradient(135deg, #4F46E5, #9333EA) !important; color: white !important; }}
+
+/* Starfield / particles: more visible, subtle animation */
 .stApp::before {{
     content: "";
     position: fixed;
@@ -322,12 +357,24 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     pointer-events: none;
     z-index: 0;
     background-image:
-        radial-gradient(1px 1px at 10% 10%, rgba({"255,255,255" if is_dark else "15,23,42"}, {dot_opacity}) 100%, transparent),
-        radial-gradient(1.5px 1.5px at 80% 20%, rgba({"255,255,255" if is_dark else "15,23,42"}, {dot_opacity_2}) 100%, transparent),
-        radial-gradient(1px 1px at 30% 60%, rgba({"255,255,255" if is_dark else "15,23,42"}, {dot_opacity}) 100%, transparent),
-        radial-gradient(2px 2px at 70% 80%, rgba({"255,255,255" if is_dark else "15,23,42"}, {dot_opacity_2}) 100%, transparent);
-    background-size: 150px 150px;
+        radial-gradient(2px 2px at 12% 15%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.85" if is_dark else "0.4"}) 100%, transparent),
+        radial-gradient(2px 2px at 88% 22%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.7" if is_dark else "0.35"}) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 35% 65%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.8" if is_dark else "0.35"}) 100%, transparent),
+        radial-gradient(2px 2px at 72% 78%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.6" if is_dark else "0.3"}) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 52% 35%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.75" if is_dark else "0.35"}) 100%, transparent),
+        radial-gradient(2px 2px at 8% 88%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.65" if is_dark else "0.3"}) 100%, transparent),
+        radial-gradient(1px 1px at 95% 55%, rgba({"255,255,255" if is_dark else "15,23,42"}, {"0.7" if is_dark else "0.3"}) 100%, transparent);
+    background-size: 220px 220px;
     background-attachment: fixed;
+    animation: particleDrift 60s linear infinite;
+}}
+@keyframes particleDrift {{
+    0% {{ background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0; }}
+    100% {{ background-position: 220px 0, -220px 0, 0 220px, 0 -220px, 110px 110px, -110px -110px, 220px 220px; }}
+}}
+@keyframes starTwinkle {{
+    0%, 100% {{ opacity: 0.7; }}
+    50% {{ opacity: 1; }}
 }}
 [data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
 
@@ -350,7 +397,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     top: -10vh; left: 50%;
     transform: translateX(-50%);
     width: 30vw; height: 90vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(79, 70, 229, 0.38) 0%, transparent 100%);
+    background: radial-gradient(ellipse 50% 100% at top center, rgba(79, 70, 229, 0.42) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
     filter: blur(50px);
@@ -360,7 +407,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     top: -5vh; left: 50%;
     transform: translateX(-50%);
     width: 8vw; height: 70vh;
-    background: radial-gradient(ellipse 50% 100% at top center, rgba(147, 51, 234, 0.55) 0%, transparent 100%);
+    background: radial-gradient(ellipse 50% 100% at top center, rgba(147, 51, 234, 0.65) 0%, transparent 100%);
     pointer-events: none;
     z-index: 0;
     filter: blur(30px);
@@ -420,12 +467,12 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     gap: 18px;
 }}
 .hero-orb {{
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
-    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #A855F7 42%, #4F46E5 100%);
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), inset 0 -4px 12px rgba(0,0,0,0.35);
-    margin-bottom: 4px;
+    background: radial-gradient(circle at 30% 30%, #ffffff 0%, #A855F7 40%, #4F46E5 100%);
+    box-shadow: 0 0 32px rgba(168, 85, 247, 0.55), inset 0 -4px 12px rgba(0,0,0,0.4);
+    margin-bottom: 8px;
 }}
 .badge {{
     display: inline-flex;
@@ -440,16 +487,16 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     color: {"#E0E7FF" if is_dark else "#3730a3"};
 }}
 .hero h1 {{
-    font-size: 2.35rem;
-    font-weight: 600;
-    letter-spacing: -0.025em;
+    font-size: 2.5rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
     color: {text_primary} !important;
     line-height: 1.2;
 }}
 .hero-desc {{
     color: {text_secondary} !important;
     font-size: 1.05rem;
-    max-width: 520px;
+    max-width: 500px;
     line-height: 1.55;
 }}
 
@@ -492,11 +539,13 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-color: rgba(168, 85, 247, 0.5);
     background: rgba(168, 85, 247, {"0.06" if is_dark else "0.08"});
 }}
+/* Uploader: keep inside container, no overflow */
+.uploader-wrap {{ width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box; }}
 [data-testid="stFileUploader"] {{
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
+    background: transparent !important; border: none !important; padding: 0 !important;
+    width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
 }}
+[data-testid="stFileUploader"] section {{ max-width: 100% !important; }}
 [data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-weight: 500 !important; }}
 
 /* Dashboard grid */
@@ -630,19 +679,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     background: rgba(255, 255, 255, {"0.02" if is_dark else "0.03"});
 }}
 
-/* Chat bar */
-.chat-section-label {{ font-size: 0.875rem; font-weight: 600; color: {text_secondary}; margin-bottom: 12px; }}
+/* Chat bar: refined, less intrusive, premium */
+.chat-section-label {{ font-size: 0.8125rem; font-weight: 600; color: {text_secondary}; margin-bottom: 16px; margin-top: 32px; }}
 [data-testid="stChatInput"] {{
     background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.25) !important;
-    border-radius: 20px !important;
-    padding: 18px 28px !important;
-    box-shadow: 0 10px 40px rgba(139, 92, 246, 0.45) !important;
-    max-width: 100% !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    border-radius: 18px !important;
+    padding: 14px 22px !important;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.38) !important;
+    max-width: 720px !important; margin-left: auto !important; margin-right: auto !important;
 }}
-[data-testid="stChatInput"]:focus-within {{ box-shadow: 0 12px 48px rgba(139, 92, 246, 0.55) !important; }}
-[data-testid="stChatInput"] input {{ color: #FFFFFF !important; font-size: 1rem !important; }}
-[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.92) !important; font-weight: 500; }}
+[data-testid="stChatInput"]:focus-within {{ box-shadow: 0 10px 40px rgba(139, 92, 246, 0.5) !important; }}
+[data-testid="stChatInput"] input {{ color: #FFFFFF !important; font-size: 0.9375rem !important; }}
+[data-testid="stChatInput"] input::placeholder {{ color: rgba(255, 255, 255, 0.9) !important; font-weight: 500; }}
 [data-testid="stChatMessage"] {{ color: {text_primary} !important; }}
 
 .summary-block {{ margin-bottom: 20px; }}
@@ -661,13 +710,24 @@ footer {{ visibility: hidden; }}
 # -----------------------------
 inject_css(st.session_state.theme, st.session_state.lang)
 
-# Header: language + theme
-with st.container():
-    h1, h2, h3 = st.columns([2, 1, 1])
-    with h2:
-        st.radio("Language", ["en", "ar"], key="lang", horizontal=True, label_visibility="collapsed", format_func=lambda x: t("lang_en") if x == "en" else t("lang_ar"))
-    with h3:
-        st.radio("Theme", ["dark", "light"], key="theme", horizontal=True, label_visibility="collapsed", format_func=lambda x: t("theme_dark") if x == "dark" else t("theme_light"))
+# Utility bar: language + theme as pill groups (5 columns: spacer, EN, AR, Dark, Light)
+_, col_en, col_ar, col_dark, col_light = st.columns([2, 1, 1, 1, 1])
+with col_en:
+    if st.button(t("lang_en"), key="pill_en"):
+        st.session_state.lang = "en"
+        st.rerun()
+with col_ar:
+    if st.button(t("lang_ar"), key="pill_ar"):
+        st.session_state.lang = "ar"
+        st.rerun()
+with col_dark:
+    if st.button(t("theme_dark"), key="pill_dark"):
+        st.session_state.theme = "dark"
+        st.rerun()
+with col_light:
+    if st.button(t("theme_light"), key="pill_light"):
+        st.session_state.theme = "light"
+        st.rerun()
 
 # Light flares (dark only)
 if st.session_state.theme == "dark":
@@ -686,8 +746,8 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Data Source
-st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("data_source")}</h2><div class="dropzone-outer">', unsafe_allow_html=True)
+# Data Source (uploader wrapped to prevent overflow)
+st.markdown(f'<div class="glass-panel"><h2 class="section-title">{t("data_source")}</h2><div class="dropzone-outer uploader-wrap">', unsafe_allow_html=True)
 uploaded_file = st.file_uploader(
     t("drag_drop") + " — " + t("supports"),
     type=["csv", "xlsx"],
