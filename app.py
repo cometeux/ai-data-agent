@@ -521,12 +521,14 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 
-/* Variant: app-container max-width 1400px, padding 40px 24px 120px */
+/* App container: max-width, responsive padding, bottom space for fixed chat bar */
 .block-container {{
     max-width: 1400px !important;
     margin: 0 auto !important;
-    padding: 40px 24px 120px !important;
+    padding: 40px 24px 100px !important;
 }}
+@media (max-width: 1023px) {{ .block-container {{ padding: 24px 16px 100px !important; }} }}
+@media (max-width: 768px) {{ .block-container {{ padding: 20px 12px 90px !important; }} }}
 
 /* Variant: sticky navbar – Data Soul Studio, compact controls */
 .navbar {{
@@ -545,7 +547,8 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .nav-logo {{ font-weight: 700; font-size: 1.1rem; color: {text_primary} !important; }}
 .nav-logo span {{ font-weight: 400; opacity: 0.5; margin-left: 8px; }}
-.nav-controls {{ display: flex; gap: 10px; align-items: center; }}
+.nav-controls {{ display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }}
+@media (max-width: 768px) {{ .navbar {{ padding: 12px 16px; }} .nav-logo {{ font-size: 1rem; }} }}
 .nav-tag {{ padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; border-radius: 8px; font-size: 0.75rem; color: {text_secondary}; }}
 .nav-tag.highlight {{ border-color: #9333EA; color: {text_primary}; }}
 .lang-switcher {{
@@ -718,18 +721,31 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .hero h1 {{ font-size: 2rem; font-weight: 600; color: {text_primary} !important; }}
 .hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 1rem; max-width: 600px; line-height: 1.5; }}
 
-/* Variant: grid-main three-column – stable sidebar widths, no collapse */
+/* Main content shell: responsive – 3-col only when enough width, else stack (no overflow) */
 .grid-main-marker + [data-testid="stHorizontalBlock"] {{
     display: grid !important;
-    grid-template-columns: minmax(280px, 1fr) minmax(400px, 2.5fr) minmax(280px, 1fr) !important;
     gap: 24px !important;
     align-items: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
 }}
 .grid-main-marker + [data-testid="stHorizontalBlock"] > div {{
     min-width: 0 !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
 }}
-@media (max-width: 1100px) {{
-    .grid-main-marker + [data-testid="stHorizontalBlock"] {{ grid-template-columns: 1fr !important; }}
+/* >= 1280px: 3 columns; rails use minmax(0, 280px) so they can shrink if needed */
+@media (min-width: 1280px) {{
+    .grid-main-marker + [data-testid="stHorizontalBlock"] {{
+        grid-template-columns: minmax(0, 280px) minmax(320px, 1fr) minmax(0, 280px) !important;
+    }}
+}}
+/* < 1280px: single column – no collision, no crushed center */
+@media (max-width: 1279px) {{
+    .grid-main-marker + [data-testid="stHorizontalBlock"] {{
+        grid-template-columns: 1fr !important;
+    }}
 }}
 
 /* Variant: section-title – readable title case, no broken wrap */
@@ -784,13 +800,14 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .tag.highlight {{ border-color: #9333EA; color: {text_primary}; }}
 .tag-grid {{ display: flex; flex-wrap: wrap; gap: 8px; }}
 
-/* Variant: insight-grid, insight-card */
+/* Variant: insight-grid, insight-card – responsive */
 .insight-grid {{
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-top: 24px;
 }}
+@media (max-width: 900px) {{ .insight-grid {{ grid-template-columns: 1fr; }} }}
 .insight-card {{
     padding: 20px;
     border-radius: 16px;
@@ -811,6 +828,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .chart-frame {{ min-height: 300px; border-radius: 12px; }}
 .chart-controls {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }}
+@media (max-width: 640px) {{ .chart-controls {{ grid-template-columns: 1fr 1fr; }} }}
 .select-box {{
     background: rgba(255,255,255,0.05);
     border: 1px solid {border_subtle};
@@ -870,6 +888,8 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     box-shadow: {shadow_glass};
     padding: 32px;
     transition: all 0.3s ease;
+    min-width: 0;
+    overflow: hidden;
 }}
 .glass-panel:hover {{
     transition: background 0.3s ease, border 0.3s ease;
@@ -1144,27 +1164,25 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-color: {border_highlight} !important;
 }}
 
-/* Variant: chat-console fixed bottom, max-width 800px, border-radius 50px */
+/* Floating AI command bar: one integrated pill – input fills the bar, no inner box */
 [data-testid="stChatInput"] {{
     position: fixed !important;
-    bottom: 32px !important;
+    bottom: 24px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: 100% !important;
-    max-width: 800px !important;
+    width: calc(100% - 32px) !important;
+    max-width: 720px !important;
     margin: 0 !important;
-    margin-top: 16px !important;
     background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
-    border-radius: 50px !important;
-    padding: 12px 24px !important;
-    min-height: 48px !important;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+    border: none !important;
+    border-radius: 28px !important;
+    padding: 10px 20px 10px 20px !important;
+    min-height: 52px !important;
+    height: auto !important;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35) !important;
     display: flex !important;
     align-items: center !important;
-    gap: 16px !important;
+    gap: 12px !important;
     z-index: 1000 !important;
 }}
 [data-testid="stChatInput"] > div {{
@@ -1172,26 +1190,37 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     min-width: 0 !important;
     background: transparent !important;
     border: none !important;
+    box-shadow: none !important;
 }}
 [data-testid="stChatInput"] input {{
     flex: 1 !important;
     min-width: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     background: transparent !important;
     border: none !important;
-    color: #FFFFFF !important;
-    font-size: 0.9375rem !important;
+    color: #fff !important;
+    font-size: 0.9rem !important;
     outline: none !important;
-    padding: 6px 0 !important;
+    padding: 8px 4px !important;
 }}
 [data-testid="stChatInput"] input::placeholder {{
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: rgba(255,255,255,0.85) !important;
 }}
-/* Send button inside command bar: compact at the edge */
 [data-testid="stChatInput"] button {{
     flex-shrink: 0 !important;
-    min-width: 36px !important;
-    padding: 8px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #fff !important;
+    padding: 6px 8px !important;
+}}
+@media (max-width: 768px) {{
+    [data-testid="stChatInput"] {{
+        width: calc(100% - 24px) !important;
+        max-width: none !important;
+        bottom: 16px !important;
+        padding: 10px 16px !important;
+    }}
 }}
 
 .summary-block {{ margin-bottom: 20px; }}
