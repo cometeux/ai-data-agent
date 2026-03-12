@@ -120,6 +120,8 @@ if "suggested_questions" not in st.session_state:
     st.session_state.suggested_questions = None
 if "chart_explanations" not in st.session_state:
     st.session_state.chart_explanations = {}
+if "data_formulas_result" not in st.session_state:
+    st.session_state.data_formulas_result = None
 
 
 # -----------------------------
@@ -131,6 +133,7 @@ def reset_app_state():
     st.session_state.last_uploaded_name = None
     st.session_state.suggested_questions = None
     st.session_state.chart_explanations = {}
+    st.session_state.data_formulas_result = None
 
 
 def load_data(uploaded_file):
@@ -395,7 +398,8 @@ RULES:
 - If the data looks like sales/performance: ask about growth, top segments, changes, comparisons.
 - If the data looks like surveys/students/people: ask about score drivers, relationships, outliers, segments.
 - If data quality is low: include at least one question about cleaning, reliability, or safe analysis.
-- Be specific (mention column or domain where helpful), not vague.
+- Optionally include one question about ready-to-paste formulas (Excel/Sheets) for cleaning or fixing the data.
+    - Be specific (mention column or domain where helpful), not vague.
 - Return ONLY a JSON array of question strings, e.g. ["Question one?", "Question two?"]. No other text."""
 
     try:
@@ -423,6 +427,36 @@ RULES:
     while len(fallback) < 5:
         fallback.append("What are the key patterns in this data?")
     return fallback[:6]
+
+
+def ask_agent_data_formulas(profile, df):
+    """Return ready-to-paste formulas (Excel, Google Sheets, optionally pandas/SQL) for common data health fixes."""
+    columns = list(df.columns)
+    ctypes = profile.get("column_types") or {}
+    sample = df.head(10).to_dict(orient="records")
+    for row in sample:
+        for k, v in row.items():
+            if hasattr(v, "isoformat"):
+                row[k] = v.isoformat()
+    prompt = f"""You are a data quality assistant. Given this dataset profile, suggest ready-to-paste formulas for common fixes.
+
+Dataset: {profile.get('total_rows')} rows, {profile.get('total_columns')} columns. Columns: {columns}.
+Column types: {ctypes}. Missing cells: {profile.get('missing_total')}. Duplicate rows: {profile.get('duplicate_rows')}.
+Sample (first 10 rows): {json.dumps(sample, default=str)}
+
+Provide 3–6 ready-to-paste formulas. For EACH formula give:
+1. **Type**: Excel, Google Sheets, and/or pandas (or SQL if relevant)
+2. **Use case**: e.g. "Fill missing values", "Trim spaces", "Standardize text", "Extract part of string", "Bucket/categorize", "Detect duplicates", "Fix case", "Date cleanup", "Conditional replacement"
+3. **Formula/code**: exact, copy-paste ready (use placeholders like A2 or column names from the list above)
+4. **Brief explanation**: one line
+
+Format clearly with headers and code blocks so the user can copy each formula directly. Prefer Excel and Google Sheets first; add pandas snippets where helpful. Be concise."""
+
+    try:
+        response = client.responses.create(model="gpt-4.1-mini", input=prompt)
+        return (response.output_text or "").strip()
+    except Exception as e:
+        return f"Could not generate formulas: {str(e)[:150]}"
 
 
 def ask_agent_chart_explanation(chart_spec, df):
@@ -459,7 +493,8 @@ Existing analysis summary (if any): {json.dumps(analysis_result.get("summary", {
 
 User question: {user_question}
 
-Answer in 2-4 short paragraphs. Be analytical and decision-oriented. Base answers only on the data and analysis above. If the data cannot answer the question, say so briefly."""
+Answer in 2-4 short paragraphs. Be analytical and decision-oriented. Base answers only on the data and analysis above. If the data cannot answer the question, say so briefly.
+When the user asks for help cleaning, fixing, or improving the data (e.g. fill missing values, trim spaces, standardize text, duplicates, dates), provide ready-to-paste formulas: give Excel and/or Google Sheets formulas and optionally pandas snippets in clear code blocks, with a one-line explanation for each. Use column names from the dataset when relevant."""
     try:
         response = client.responses.create(model="gpt-4.1-mini", input=prompt)
         return (response.output_text or "").strip()
@@ -535,6 +570,21 @@ def render_chart_fig(df, chart, is_dark):
             yaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)")
         )
     return fig
+
+
+# -----------------------------
+# Chat response HTML (scrollable body + copy button)
+# -----------------------------
+def _datara_chat_response_html(content):
+    """Build HTML for assistant message: scrollable body + Copy button. Content must be plain text."""
+    body_escaped = html.escape(content).replace("\n", "<br>")
+    copy_attr = html.escape(content).replace("\n", "&#10;").replace("\r", "")
+    return (
+        f'<div class="datara-chat-response">'
+        f'<div class="datara-chat-body">{body_escaped}</div>'
+        f'<button type="button" class="datara-copy-btn" data-copy="{copy_attr}">Copy</button>'
+        f'</div>'
+    )
 
 
 # -----------------------------
@@ -877,13 +927,6 @@ def apply_css():
         background: rgba(212, 171, 254, 0.2) !important;
         border: 1px solid rgba(212, 171, 254, 0.25) !important;
     }
-    [data-testid="stChatInput"] {
-        background: var(--bg-panel) !important;
-        border: 1px solid var(--border-medium) !important;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
-        border-radius: 999px !important;
-    }
-    [data-testid="stChatInput"] textarea { color: var(--text-primary) !important; }
 
     /* Universal AI assistant section — separator and heading */
     .datara-ai-section {
@@ -966,14 +1009,14 @@ def apply_css():
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p { margin-bottom: 0.75em !important; }
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p:last-child { margin-bottom: 0 !important; }
 
-    /* Findings — refined spacing, icons, themed cards */
+    /* Findings — breathable spacing, refined vertical rhythm */
     .datara-finding-card {
         font-family: var(--font-sans);
         background: var(--bg-panel);
         border: 1px solid var(--border-dim);
         border-radius: var(--radius-lg);
-        padding: 22px 26px;
-        margin-bottom: 20px;
+        padding: 26px 30px;
+        margin-bottom: 24px;
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
     }
     .datara-finding-card:last-child { margin-bottom: 0; }
@@ -986,8 +1029,8 @@ def apply_css():
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--text-muted);
-        margin-bottom: 12px;
-        padding-bottom: 12px;
+        margin-bottom: 14px;
+        padding-bottom: 14px;
         border-bottom: 1px solid var(--border-dim);
     }
     .datara-finding-label .datara-finding-icon {
@@ -1005,8 +1048,60 @@ def apply_css():
         font-size: 15px;
         line-height: 1.58;
         color: var(--text-secondary);
+        margin-top: 2px;
     }
     .datara-finding-value br { margin: 0.5em 0; }
+
+    /* Chat response — scrollable body + copy action */
+    .datara-chat-response { margin-top: 4px; }
+    .datara-chat-body {
+        max-height: 50vh;
+        overflow-y: auto;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        padding-right: 8px;
+    }
+    .datara-chat-body br { margin: 0.4em 0; }
+    .datara-copy-btn {
+        font-family: var(--font-sans);
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--text-muted);
+        background: rgba(255,255,255,0.06);
+        border: 1px solid var(--border-dim);
+        border-radius: 999px;
+        padding: 6px 14px;
+        margin-top: 12px;
+        cursor: pointer;
+        transition: color 0.2s, border-color 0.2s, background 0.2s;
+    }
+    .datara-copy-btn:hover {
+        color: var(--text-secondary);
+        border-color: var(--border-medium);
+        background: rgba(255,255,255,0.08);
+    }
+
+    /* Chat input — floating, airy, premium assistant bar */
+    [data-testid="stChatInput"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-medium) !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03) !important;
+        border-radius: 999px !important;
+        padding: 12px 20px 12px 24px !important;
+        margin-top: 16px !important;
+    }
+    [data-testid="stChatInput"]:focus-within {
+        border-color: rgba(212, 171, 254, 0.35) !important;
+        box-shadow: 0 4px 28px rgba(0,0,0,0.3), 0 0 0 1px rgba(212, 171, 254, 0.15) !important;
+    }
+    [data-testid="stChatInput"] textarea {
+        color: var(--text-primary) !important;
+        font-size: 15px !important;
+    }
+    [data-testid="stChatInput"] textarea::placeholder {
+        color: var(--text-muted) !important;
+    }
 
     /* Tab content — consistent vertical rhythm */
     [data-testid="stTabs"] [data-testid="stVerticalBlock"] {
@@ -1030,6 +1125,19 @@ def apply_css():
     }
 
     </style>
+    <script>
+    document.body.addEventListener("click", function(e) {
+        var btn = e.target.closest(".datara-copy-btn");
+        if (btn && btn.getAttribute("data-copy") !== null) {
+            var text = btn.getAttribute("data-copy");
+            try {
+                navigator.clipboard.writeText(text);
+                btn.textContent = "Copied!";
+                setTimeout(function() { btn.textContent = "Copy"; }, 1400);
+            } catch (err) {}
+        }
+    });
+    </script>
     """, unsafe_allow_html=True)
 
 
@@ -1064,6 +1172,7 @@ if st.session_state.last_uploaded_name != uploaded_file.name:
     st.session_state.last_uploaded_name = uploaded_file.name
     st.session_state.suggested_questions = None
     st.session_state.chart_explanations = {}
+    st.session_state.data_formulas_result = None
 
 try:
     df = load_data(uploaded_file)
@@ -1246,6 +1355,23 @@ with tab_health:
         parts.append(f'<div class="datara-content-panel"><div class="datara-panel-body">No major data health issues detected.</div></div>')
     st.markdown("".join(parts), unsafe_allow_html=True)
 
+    # Ready-to-paste formulas (Excel, Google Sheets, pandas)
+    st.markdown("---")
+    st.caption("**Ready-to-paste formulas** — Get copy-paste formulas for common data fixes (Excel, Google Sheets, pandas).")
+    if st.button("Generate formulas for this dataset", key="btn_data_formulas"):
+        with st.spinner("Generating formulas..."):
+            st.session_state.data_formulas_result = ask_agent_data_formulas(profile, df)
+        st.rerun()
+    if st.session_state.data_formulas_result:
+        formula_text = st.session_state.data_formulas_result
+        copy_attr = html.escape(formula_text).replace("\n", "&#10;").replace("\r", "")
+        st.markdown("**Formulas**")
+        st.markdown(formula_text)
+        st.markdown(
+            f'<button type="button" class="datara-copy-btn" data-copy="{copy_attr}">Copy all</button>',
+            unsafe_allow_html=True,
+        )
+
 with tab_findings:
     if result is None:
         st.caption("Generate summary above to see findings.")
@@ -1316,14 +1442,17 @@ if st.session_state.pending_question:
         answer = ask_agent_question(df, result or {}, q, profile)
     st.session_state.chat_history.append({"role": "assistant", "content": answer})
     st.rerun()
-for msg in st.session_state.chat_history:
+for idx, msg in enumerate(st.session_state.chat_history):
     with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+        if msg["role"] == "assistant":
+            st.markdown(_datara_chat_response_html(msg["content"]), unsafe_allow_html=True)
+        else:
+            st.write(msg["content"])
 user_question = st.chat_input("Ask anything about your data...")
 if user_question:
     st.session_state.chat_history.append({"role": "user", "content": user_question})
     with st.chat_message("assistant"):
         answer = ask_agent_question(df, result or {}, user_question, profile)
-        st.write(answer)
+        st.markdown(_datara_chat_response_html(answer), unsafe_allow_html=True)
     st.session_state.chat_history.append({"role": "assistant", "content": answer})
     st.rerun()
