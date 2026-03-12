@@ -517,8 +517,8 @@ def prepare_chart_data(df, x_column, y_column, aggregation):
     return data, y_column
 
 
-# Datara chart palette — lilac/soft purple only, no default blue
-DATARA_CHART_COLORS = ["#D4ABFE", "#a78bfa", "#8b5cf6", "#c084fc", "#7c3aed", "#6d28d9"]
+# Chart palette — 🫆 lilac / orchid / muted violet / deep plum (premium, soft)
+DATARA_CHART_COLORS = ["#D4ABFE", "#B98AF9", "#A978F4", "#7E5AB6", "#6d28d9", "#2A1E3F"]
 
 
 def render_chart_fig(df, chart, is_dark):
@@ -545,7 +545,7 @@ def render_chart_fig(df, chart, is_dark):
     if is_dark:
         fig.update_layout(
             paper_bgcolor="#161121",
-            plot_bgcolor="#221b32",
+            plot_bgcolor="#2A1E3F",
             font=dict(family="Inter, sans-serif", color="#ffffff", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(
@@ -561,9 +561,9 @@ def render_chart_fig(df, chart, is_dark):
                 title_font=dict(color="#9B92AB", size=12),
             ),
             colorway=DATARA_CHART_COLORS,
-            legend=dict(bgcolor="rgba(22, 17, 33, 0.9)", font=dict(color="#9B92AB", size=11), bordercolor="rgba(255,255,255,0.08)"),
-            hoverlabel=dict(bgcolor="#221b32", font=dict(color="#ffffff", size=12), bordercolor="rgba(212, 171, 254, 0.3)"),
-            modebar=dict(bgcolor="rgba(22, 17, 33, 0.8)", color="#9B92AB", activecolor="#D4ABFE"),
+            legend=dict(bgcolor="rgba(42, 30, 63, 0.95)", font=dict(color="#9B92AB", size=11), bordercolor="rgba(212, 171, 254, 0.14)"),
+            hoverlabel=dict(bgcolor="#2A1E3F", font=dict(color="#ffffff", size=12), bordercolor="rgba(212, 171, 254, 0.2)"),
+            modebar=dict(bgcolor="rgba(42, 30, 63, 0.9)", color="#9B92AB", activecolor="#A978F4"),
         )
         if chart_type == "pie":
             fig.update_traces(marker=dict(colors=DATARA_CHART_COLORS))
@@ -620,15 +620,19 @@ def apply_css():
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --bg-base: #06040a;
+        /* 🫆 lilac–orchid–violet palette: soft, premium, dark */
+        --bg-base: #06040A;
         --bg-panel: #161121;
-        --bg-surface: #221b32;
-        --border-dim: rgba(255, 255, 255, 0.04);
-        --border-medium: rgba(255, 255, 255, 0.06);
-        --border-bright: rgba(255, 255, 255, 0.08);
+        --bg-surface: #2A1E3F;
         --accent-primary: #D4ABFE;
-        --accent-secondary: #a78bfa;
-        --accent-glow: #a78bfa;
+        --accent-secondary: #B98AF9;
+        --accent-glow: #A978F4;
+        --muted-violet: #7E5AB6;
+        --deep-plum: #2A1E3F;
+        --border-violet: rgba(212, 171, 254, 0.14);
+        --border-dim: rgba(212, 171, 254, 0.1);
+        --border-medium: rgba(212, 171, 254, 0.18);
+        --border-bright: rgba(212, 171, 254, 0.26);
         --text-primary: #ffffff;
         --text-secondary: #9B92AB;
         --text-muted: #6e6580;
@@ -655,10 +659,10 @@ def apply_css():
     select:focus, [data-baseweb="select"]:focus-within {
         outline: none !important;
         border-color: var(--accent-primary) !important;
-        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px rgba(212, 171, 254, 0.12) !important;
+        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px rgba(169, 120, 244, 0.12) !important;
     }
     .stButton > button:focus, .stButton > button:focus-visible {
-        box-shadow: 0 4px 20px rgba(212, 171, 254, 0.35), 0 0 0 2px rgba(212, 171, 254, 0.2) !important;
+        box-shadow: 0 4px 20px rgba(212, 171, 254, 0.3), 0 0 0 2px rgba(169, 120, 244, 0.2) !important;
     }
     [data-testid="stProgress"] > div,
     [data-testid="stProgress"] [role="progressbar"],
@@ -668,7 +672,7 @@ def apply_css():
         background-color: var(--accent-primary) !important;
     }
     [data-testid="stProgress"] {
-        background: var(--bg-surface) !important;
+        background: var(--deep-plum) !important;
         border-radius: var(--radius-sm) !important;
     }
     [data-testid="stFileUploader"] [role="progressbar"],
@@ -680,11 +684,11 @@ def apply_css():
     }
     [data-testid="stFileUploader"] [data-testid="stProgress"],
     [data-testid="stFileUploader"] [data-testid="stProgress"] > div {
-        background: var(--bg-surface) !important;
+        background: var(--deep-plum) !important;
     }
     [data-testid="stChatInput"]:focus-within {
-        border-color: var(--accent-primary) !important;
-        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px rgba(212, 171, 254, 0.1) !important;
+        border-color: var(--accent-glow) !important;
+        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px var(--border-violet) !important;
     }
     /* Remove every remaining red/coral accent leak — Datara only */
     *:focus-visible { outline-color: var(--accent-primary) !important; }
@@ -711,7 +715,35 @@ def apply_css():
 
     [data-testid="stAppViewContainer"] {
         background: var(--bg-base) !important;
-        background-image: radial-gradient(ellipse at 50% 30%, #221b32 0%, #06040a 70%) !important;
+        background-image: radial-gradient(ellipse at 50% 30%, var(--deep-plum) 0%, var(--bg-base) 70%) !important;
+    }
+    /* Brand mark — temporary 🫆, replaceable with custom SVG/logo later */
+    .datara-brand-mark {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        font-size: 28px;
+        line-height: 1;
+        margin-right: 12px;
+        vertical-align: middle;
+    }
+    .datara-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
+    .datara-hero-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .datara-hero-title {
+        font-family: var(--font-sans);
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+        margin: 0;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
     }
     .block-container { max-width: 1200px; padding: 48px 32px 64px; }
     .stApp, .stApp .main { background: transparent !important; }
@@ -788,12 +820,12 @@ def apply_css():
         font-size: 15px !important; font-weight: 600 !important;
         padding: 16px !important;
         width: 100%; max-width: 360px;
-        box-shadow: 0 4px 20px rgba(212, 171, 254, 0.3) !important;
+        box-shadow: 0 4px 20px rgba(169, 120, 244, 0.28) !important;
         transition: transform 0.2s, box-shadow 0.2s !important;
     }
     .stButton > button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 8px 25px rgba(212, 171, 254, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(169, 120, 244, 0.35) !important;
     }
 
     /* Expander — Datara: same panel language, subtle border */
@@ -974,11 +1006,11 @@ def apply_css():
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img {
         filter: brightness(1.1) contrast(0.95) !important;
     }
-    /* Assistant icon: soft Datara accent */
+    /* Assistant icon: soft lilac glow */
     [data-testid="stChatMessage"][data-role="assistant"] > div:first-child,
     [data-testid="stChatMessage"][data-role="assistant"] [data-testid="stChatMessageAvatar"] {
-        background: rgba(212, 171, 254, 0.2) !important;
-        border: 1px solid rgba(212, 171, 254, 0.25) !important;
+        background: rgba(212, 171, 254, 0.18) !important;
+        border: 1px solid var(--border-medium) !important;
     }
 
     /* Universal AI assistant section — separator and heading */
@@ -1146,15 +1178,15 @@ def apply_css():
     /* Chat input — floating, airy, premium assistant bar */
     [data-testid="stChatInput"] {
         background: var(--bg-panel) !important;
-        border: 1px solid var(--border-medium) !important;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03) !important;
+        border: 1px solid var(--border-violet) !important;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px var(--border-violet) !important;
         border-radius: 999px !important;
         padding: 12px 20px 12px 24px !important;
         margin-top: 16px !important;
     }
     [data-testid="stChatInput"]:focus-within {
-        border-color: rgba(212, 171, 254, 0.35) !important;
-        box-shadow: 0 4px 28px rgba(0,0,0,0.3), 0 0 0 1px rgba(212, 171, 254, 0.15) !important;
+        border-color: var(--accent-glow) !important;
+        box-shadow: 0 4px 28px rgba(0,0,0,0.3), 0 0 0 1px var(--border-medium) !important;
     }
     [data-testid="stChatInput"] textarea {
         color: var(--text-primary) !important;
@@ -1207,8 +1239,14 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# 1. Header (Datara branding) + Hero
-st.title("Is your data usable? What matters? What's next?")
+# 1. Header — brand mark (🫆 temporary, replaceable with SVG) + Hero
+st.markdown(
+    '<div class="datara-hero-row">'
+    '<span class="datara-brand-mark" aria-hidden="true">🫆</span>'
+    '<h1 class="datara-hero-title">Is your data usable? What matters? What\'s next?</h1>'
+    '</div>',
+    unsafe_allow_html=True,
+)
 st.caption("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
 
 # 2. Upload zone

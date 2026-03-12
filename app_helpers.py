@@ -120,7 +120,7 @@ def prepare_chart_data(df, x_column, y_column, aggregation):
     return data, y_column
 
 
-DATARA_CHART_COLORS = ["#D4ABFE", "#a78bfa", "#8b5cf6", "#c084fc", "#7c3aed", "#6d28d9"]
+DATARA_CHART_COLORS = ["#D4ABFE", "#B98AF9", "#A978F4", "#7E5AB6", "#6d28d9", "#2A1E3F"]
 
 
 def render_chart_fig(df, chart, is_dark):
@@ -149,7 +149,7 @@ def render_chart_fig(df, chart, is_dark):
     if is_dark:
         fig.update_layout(
             paper_bgcolor="#161121",
-            plot_bgcolor="#221b32",
+            plot_bgcolor="#2A1E3F",
             font=dict(family="Inter, sans-serif", color="#ffffff", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(
@@ -165,9 +165,9 @@ def render_chart_fig(df, chart, is_dark):
                 title_font=dict(color="#9B92AB", size=12),
             ),
             colorway=DATARA_CHART_COLORS,
-            legend=dict(bgcolor="rgba(22, 17, 33, 0.9)", font=dict(color="#9B92AB", size=11), bordercolor="rgba(255,255,255,0.08)"),
-            hoverlabel=dict(bgcolor="#221b32", font=dict(color="#ffffff", size=12), bordercolor="rgba(212, 171, 254, 0.3)"),
-            modebar=dict(bgcolor="rgba(22, 17, 33, 0.8)", color="#9B92AB", activecolor="#D4ABFE"),
+            legend=dict(bgcolor="rgba(42, 30, 63, 0.95)", font=dict(color="#9B92AB", size=11), bordercolor="rgba(212, 171, 254, 0.14)"),
+            hoverlabel=dict(bgcolor="#2A1E3F", font=dict(color="#ffffff", size=12), bordercolor="rgba(212, 171, 254, 0.2)"),
+            modebar=dict(bgcolor="rgba(42, 30, 63, 0.9)", color="#9B92AB", activecolor="#A978F4"),
         )
         if chart_type == "pie":
             fig.update_traces(marker=dict(colors=DATARA_CHART_COLORS))
