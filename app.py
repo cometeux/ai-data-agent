@@ -717,34 +717,6 @@ def apply_css():
         background: var(--bg-base) !important;
         background-image: radial-gradient(ellipse at 50% 30%, var(--deep-plum) 0%, var(--bg-base) 70%) !important;
     }
-    /* Brand mark — temporary 🫆, replaceable with custom SVG/logo later */
-    .datara-brand-mark {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 40px;
-        height: 40px;
-        font-size: 28px;
-        line-height: 1;
-        margin-right: 12px;
-        vertical-align: middle;
-    }
-    .datara-brand-mark img { width: 100%; height: 100%; object-fit: contain; }
-    .datara-hero-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 8px;
-    }
-    .datara-hero-title {
-        font-family: var(--font-sans);
-        font-size: 28px;
-        font-weight: 600;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
-        margin: 0;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    }
     .block-container { max-width: 1200px; padding: 48px 32px 64px; }
     .stApp, .stApp .main { background: transparent !important; }
     .stApp .main .block-container { color: var(--text-secondary); font-family: var(--font-sans); }
@@ -761,18 +733,19 @@ def apply_css():
         color: var(--text-secondary) !important;
     }
 
-    /* Upload zone — design: panel, inset shadow, radius-lg */
+    /* Upload zone — panel, subtle hover only (no harsh border/outline) */
     [data-testid="stFileUploader"] { margin: 0.5rem 0 !important; }
     [data-testid="stFileUploader"] section {
         background: var(--bg-panel) !important;
-        border: 1px solid var(--border-medium) !important;
+        border: 1px solid var(--border-dim) !important;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
         border-radius: var(--radius-lg) !important;
         padding: 32px !important;
+        transition: background 0.2s ease, box-shadow 0.2s ease !important;
     }
     [data-testid="stFileUploader"] section:hover {
-        border-color: var(--accent-primary) !important;
-        background: var(--bg-surface) !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.25), 0 0 0 1px rgba(212, 171, 254, 0.06) !important;
     }
     [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
         font-size: 15px !important; font-weight: 500 !important; color: var(--text-primary) !important;
@@ -969,7 +942,7 @@ def apply_css():
     }
     [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
 
-    /* Chat — Ask AI: full-width assistant panel, not narrow bubble */
+    /* Chat — Ask AI: full-width stable panel, no narrow container or overflow bugs */
     [data-testid="stChatMessage"] {
         background: var(--bg-panel) !important;
         border: 1px solid var(--border-dim) !important;
@@ -977,12 +950,17 @@ def apply_css():
         color: var(--text-secondary) !important;
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
         margin-bottom: 16px !important;
-        padding: 20px 24px !important;
+        padding: 22px 26px !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
     }
     [data-testid="stChatMessage"] > div {
         width: 100% !important;
         max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
     }
     [data-testid="stChatMessage"] > div > div:last-child,
     [data-testid="stChatMessage"] > div:last-child {
@@ -990,10 +968,12 @@ def apply_css():
         min-width: 0 !important;
         max-width: none !important;
         width: 100% !important;
+        overflow: visible !important;
     }
     [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
         width: 100% !important;
         max-width: none !important;
+        min-width: 0 !important;
     }
     /* Avatar/icon container: muted dark panel or soft purple */
     [data-testid="stChatMessage"] > div:first-child,
@@ -1021,6 +1001,16 @@ def apply_css():
         border-top: 1px solid var(--border-dim) !important;
     }
     .stApp h2 { font-family: var(--font-sans) !important; font-size: 18px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
+
+    /* Suggested question chips — wrap cleanly, no overflow */
+    .block-container [data-testid="column"] { min-width: 0 !important; }
+    .block-container [data-testid="column"] .stButton > button {
+        white-space: normal !important;
+        overflow-wrap: break-word !important;
+        word-wrap: break-word !important;
+        max-width: 100% !important;
+        text-align: left !important;
+    }
 
     /* Tab-inner buttons — pill secondary */
     [data-testid="stTabs"] .stButton > button {
@@ -1095,16 +1085,17 @@ def apply_css():
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p { margin-bottom: 0.75em !important; }
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p:last-child { margin-bottom: 0 !important; }
 
-    /* Findings — breathable spacing, refined vertical rhythm */
+    /* Findings — proper spacing rhythm, breathable and polished */
     .datara-finding-card {
         font-family: var(--font-sans);
         background: var(--bg-panel);
         border: 1px solid var(--border-dim);
         border-radius: var(--radius-lg);
-        padding: 26px 30px;
-        margin-bottom: 24px;
+        padding: 30px 34px;
+        margin-bottom: 32px;
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
     }
+    .datara-finding-card:first-of-type { margin-top: 24px; }
     .datara-finding-card:last-child { margin-bottom: 0; }
     .datara-finding-label {
         display: flex;
@@ -1115,8 +1106,8 @@ def apply_css():
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--text-muted);
-        margin-bottom: 14px;
-        padding-bottom: 14px;
+        margin-bottom: 18px;
+        padding-bottom: 18px;
         border-bottom: 1px solid var(--border-dim);
     }
     .datara-finding-label .datara-finding-icon {
@@ -1134,26 +1125,33 @@ def apply_css():
         font-size: 15px;
         line-height: 1.58;
         color: var(--text-secondary);
-        margin-top: 2px;
+        margin-top: 8px;
     }
     .datara-finding-value br { margin: 0.5em 0; }
 
-    /* Chat response — scrollable body + copy action */
+    /* Chat response — full-width reading panel, internal scroll only */
     .datara-chat-response {
-        margin-top: 8px;
+        margin-top: 10px;
         width: 100%;
         max-width: 100%;
-        padding-right: 4px;
+        min-width: 0;
+        padding-right: 6px;
+        box-sizing: border-box;
     }
     .datara-chat-body {
         max-height: 50vh;
+        min-height: 2rem;
         overflow-y: auto;
+        overflow-x: hidden;
         font-size: 15px;
         line-height: 1.6;
         color: var(--text-secondary);
-        padding: 4px 12px 4px 0;
+        padding: 6px 12px 6px 0;
         width: 100%;
         max-width: 100%;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     .datara-chat-body br { margin: 0.4em 0; }
     .datara-copy-btn {
@@ -1239,14 +1237,8 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# 1. Header — brand mark (🫆 temporary, replaceable with SVG) + Hero
-st.markdown(
-    '<div class="datara-hero-row">'
-    '<span class="datara-brand-mark" aria-hidden="true">🫆</span>'
-    '<h1 class="datara-hero-title">Is your data usable? What matters? What\'s next?</h1>'
-    '</div>',
-    unsafe_allow_html=True,
-)
+# 1. Header + Hero (clean, no icon)
+st.title("Is your data usable? What matters? What's next?")
 st.caption("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
 
 # 2. Upload zone
