@@ -1033,6 +1033,28 @@ def apply_css():
         color: #161121 !important;
     }
 
+    /* Ask AI — message icons: muted lilac/plum, subtle border, no red/warm */
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"],
+    [data-testid="stChatMessage"] > div > div:first-child {
+        background: var(--bg-surface) !important;
+        border: 1px solid var(--border-dim) !important;
+        border-radius: var(--radius-sm) !important;
+        color: var(--text-muted) !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img,
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] svg,
+    [data-testid="stChatMessage"] > div > div:first-child img,
+    [data-testid="stChatMessage"] > div > div:first-child svg {
+        filter: brightness(1.05) saturate(0.7) !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] path,
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] circle,
+    [data-testid="stChatMessage"] > div > div:first-child path,
+    [data-testid="stChatMessage"] > div > div:first-child circle {
+        fill: var(--text-muted) !important;
+        stroke: var(--text-muted) !important;
+    }
+
     /* Tab-inner buttons — pill secondary */
     [data-testid="stTabs"] .stButton > button {
         max-width: none; width: auto;
