@@ -143,6 +143,62 @@ if "chart_explanations" not in st.session_state:
 if "data_formulas_result" not in st.session_state:
     st.session_state.data_formulas_result = None
 
+# Apply theme/lang from URL (custom segment controls use ?theme= & ?lang=)
+if "theme" in st.query_params:
+    v = st.query_params.get("theme")
+    if v in ("dark", "light") and st.session_state.theme != v:
+        st.session_state.theme = v
+        st.rerun()
+if "lang" in st.query_params:
+    v = st.query_params.get("lang")
+    if v in ("en", "ar") and st.session_state.lang != v:
+        st.session_state.lang = v
+        st.rerun()
+
+# -----------------------------
+# Theme tokens (single source of truth; apply_css injects :root from these)
+# -----------------------------
+THEME_DARK = {
+    "bg_base": "#06040A",
+    "bg_panel": "#161121",
+    "bg_surface": "#2A1E3F",
+    "accent_primary": "#D4ABFE",
+    "accent_secondary": "#B98AF9",
+    "accent_glow": "#A978F4",
+    "muted_violet": "#7E5AB6",
+    "deep_plum": "#2A1E3F",
+    "border_violet": "rgba(212, 171, 254, 0.14)",
+    "border_dim": "rgba(212, 171, 254, 0.1)",
+    "border_medium": "rgba(212, 171, 254, 0.18)",
+    "border_bright": "rgba(212, 171, 254, 0.26)",
+    "text_primary": "#ffffff",
+    "text_secondary": "#9B92AB",
+    "text_muted": "#6e6580",
+    "gradient_start": "#2A1E3F",
+    "gradient_end": "#06040A",
+    "hero_shadow": "0 2px 10px rgba(0,0,0,0.5)",
+}
+THEME_LIGHT = {
+    "bg_base": "#f5f3f8",
+    "bg_panel": "#ffffff",
+    "bg_surface": "#ebe8f2",
+    "accent_primary": "#8B5CF6",
+    "accent_secondary": "#7C3AED",
+    "accent_glow": "#6D28D9",
+    "muted_violet": "#7E5AB6",
+    "deep_plum": "#e5e0ef",
+    "border_violet": "rgba(126, 90, 182, 0.2)",
+    "border_dim": "rgba(126, 90, 182, 0.2)",
+    "border_medium": "rgba(126, 90, 182, 0.3)",
+    "border_bright": "rgba(126, 90, 182, 0.4)",
+    "text_primary": "#1a1525",
+    "text_secondary": "#4a4358",
+    "text_muted": "#6e6580",
+    "gradient_start": "#e5e0ef",
+    "gradient_end": "#f5f3f8",
+    "hero_shadow": "none",
+}
+
 
 # -----------------------------
 # Helpers
@@ -617,6 +673,16 @@ def _datara_ask_ai_response_panel(content):
     )
 
 
+def _datara_user_msg_html(content):
+    """Single user message row (custom HTML) to avoid st.chat_message duplication and red styling."""
+    body_escaped = html.escape(content).replace("\n", "<br>")
+    return (
+        f'<div class="datara-ask-ai-user-row">'
+        f'<div class="datara-ask-ai-user-bubble">{body_escaped}</div>'
+        f'</div>'
+    )
+
+
 # -----------------------------
 # Finding card icons (SVG, theme-muted)
 # -----------------------------
@@ -631,36 +697,25 @@ FINDING_ICONS = {
 # -----------------------------
 # Datara UI — design-system fidelity (Inter, JetBrains Mono, #0a0812, #a78bfa)
 # -----------------------------
+def _root_css(theme):
+    """Build :root block from THEME_DARK or THEME_LIGHT so light mode is server-driven."""
+    tokens = THEME_LIGHT if theme == "light" else THEME_DARK
+    lines = [f"        --{k.replace('_', '-')}: {v};" for k, v in tokens.items()]
+    lines.append("        --font-sans: 'Inter', -apple-system, sans-serif;")
+    lines.append("        --font-mono: 'JetBrains Mono', monospace;")
+    lines.append("        --radius-sm: 12px; --radius-md: 18px; --radius-lg: 24px;")
+    return "    :root {\n" + "\n".join(lines) + "\n    }\n"
+
+
 def apply_css():
-    # Single HTML block starting with < so Streamlit doesn't render as code
+    theme = st.session_state.get("theme", "dark")
+    root_block = _root_css(theme)
     st.markdown("""<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    /* === Datara theme tokens: dark = :root; light = body.datara-theme-light overrides === */
-    :root {
-        /* Dark theme (default) — lilac–orchid–violet */
-        --bg-base: #06040A;
-        --bg-panel: #161121;
-        --bg-surface: #2A1E3F;
-        --accent-primary: #D4ABFE;
-        --accent-secondary: #B98AF9;
-        --accent-glow: #A978F4;
-        --muted-violet: #7E5AB6;
-        --deep-plum: #2A1E3F;
-        --border-violet: rgba(212, 171, 254, 0.14);
-        --border-dim: rgba(212, 171, 254, 0.1);
-        --border-medium: rgba(212, 171, 254, 0.18);
-        --border-bright: rgba(212, 171, 254, 0.26);
-        --text-primary: #ffffff;
-        --text-secondary: #9B92AB;
-        --text-muted: #6e6580;
-        --font-sans: 'Inter', -apple-system, sans-serif;
-        --font-mono: 'JetBrains Mono', monospace;
-        --radius-sm: 12px;
-        --radius-md: 18px;
-        --radius-lg: 24px;
-    }
+    /* Datara theme: """ + theme + """ (tokens in :root) */
+""" + root_block + """
     * { box-sizing: border-box; }
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
@@ -749,7 +804,7 @@ def apply_css():
 
     [data-testid="stAppViewContainer"] {
         background: var(--bg-base) !important;
-        background-image: radial-gradient(ellipse at 50% 30%, var(--deep-plum) 0%, var(--bg-base) 70%) !important;
+        background-image: radial-gradient(ellipse at 50% 30%, var(--gradient-start) 0%, var(--gradient-end) 70%) !important;
     }
     .block-container { max-width: 1200px; padding: 48px 32px 64px; }
     .stApp, .stApp .main { background: transparent !important; }
@@ -758,7 +813,7 @@ def apply_css():
     .stApp h1 {
         font-family: var(--font-sans); font-size: 28px !important; font-weight: 600 !important;
         color: var(--text-primary) !important; letter-spacing: -0.5px; margin-bottom: 8px !important;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        text-shadow: var(--hero-shadow);
     }
     .stApp [data-testid="stMarkdown"] p { color: var(--text-secondary) !important; font-size: 15px; }
     .stApp .stCaption { color: var(--text-muted) !important; font-size: 13px !important; }
@@ -1041,6 +1096,26 @@ def apply_css():
     }
     .datara-ask-ai-response-body br { margin: 0.4em 0 !important; }
 
+    /* Ask AI — user message row (custom HTML; no st.chat_message, no red) */
+    .datara-ask-ai-user-row {
+        display: block !important;
+        width: 100% !important;
+        margin-bottom: 12px !important;
+    }
+    .datara-ask-ai-user-bubble {
+        display: inline-block !important;
+        max-width: 85% !important;
+        padding: 12px 18px !important;
+        background: var(--muted-violet) !important;
+        border: 1px solid var(--border-violet) !important;
+        border-radius: var(--radius-lg) !important;
+        font-size: 15px !important;
+        line-height: 1.5 !important;
+        color: var(--text-primary) !important;
+        box-shadow: none !important;
+    }
+    body.datara-lang-ar .datara-ask-ai-user-bubble { margin-right: 0 !important; margin-left: auto !important; }
+
     /* Ask AI — chat input: full width, floating, Datara theme; send button = accent, NO red */
     [data-testid="stChatInput"] {
         background: var(--bg-panel) !important;
@@ -1102,6 +1177,24 @@ def apply_css():
         fill: #8b7a9e !important;
         stroke: #8b7a9e !important;
     }
+    /* Kill ALL red/coral in chat and Ask AI area — Datara plum/lilac only */
+    [data-testid="stChatMessage"],
+    [data-testid="stChatMessage"] *,
+    [data-testid="stChatInput"],
+    [data-testid="stChatInput"] *,
+    .block-container > *:has(.datara-ask-ai-divider) ~ *,
+    .block-container > *:has(.datara-ask-ai-suggested-label),
+    .block-container > *:has(.datara-ask-ai-user-row),
+    .block-container > *:has(.datara-ask-ai-response) {
+        --primary: var(--accent-primary) !important;
+        --background-color: var(--bg-panel) !important;
+    }
+    [data-testid="stChatMessage"] [style*="red"],
+    [data-testid="stChatMessage"] [style*="coral"],
+    [data-testid="stChatInput"] [style*="red"],
+    [data-testid="stChatInput"] [style*="coral"] { background: var(--muted-violet) !important; color: var(--text-primary) !important; border-color: var(--border-violet) !important; }
+    [data-testid="stChatInput"] button svg path,
+    [data-testid="stChatInput"] [data-testid="stChatInputSubmitButton"] svg path { fill: #161121 !important; stroke: #161121 !important; }
 
     /* Tab-inner buttons — pill secondary */
     [data-testid="stTabs"] .stButton > button {
@@ -1232,130 +1325,6 @@ def apply_css():
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
     }
 
-    /* Light theme — full app restyle, premium soft surfaces */
-    body.datara-theme-light {
-        --bg-base: #f5f3f8;
-        --bg-panel: #ffffff;
-        --bg-surface: #ebe8f2;
-        --text-primary: #1a1525;
-        --text-secondary: #4a4358;
-        --text-muted: #6e6580;
-        --border-dim: rgba(126, 90, 182, 0.18);
-        --border-medium: rgba(126, 90, 182, 0.28);
-        --border-bright: rgba(126, 90, 182, 0.4);
-        --deep-plum: #e5e0ef;
-    }
-    body.datara-theme-light [data-testid="stAppViewContainer"] {
-        background: #f5f3f8 !important;
-        background-image: radial-gradient(ellipse at 50% 30%, #e5e0ef 0%, #f5f3f8 70%) !important;
-    }
-    body.datara-theme-light .stApp .main .block-container,
-    body.datara-theme-light [data-testid="stMarkdown"] p { color: #4a4358 !important; }
-    body.datara-theme-light .stApp h1 { color: #1a1525 !important; text-shadow: none !important; }
-    body.datara-theme-light .stApp .stCaption { color: #6e6580 !important; }
-    body.datara-theme-light .stApp h2, body.datara-theme-light .stApp h3 { color: #1a1525 !important; }
-    body.datara-theme-light [data-testid="stFileUploader"] section {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.04) !important;
-    }
-    body.datara-theme-light [data-testid="stFileUploader"] section:hover {
-        background: #faf9fc !important;
-        border-color: rgba(126, 90, 182, 0.28) !important;
-    }
-    body.datara-theme-light .datara-upload-prompt {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-        color: #6e6580 !important;
-    }
-    body.datara-theme-light [data-testid="stMetric"] [data-testid="stMetricValue"],
-    body.datara-theme-light [data-testid="metric-container"] [data-testid="stMetricValue"] { color: #1a1525 !important; }
-    body.datara-theme-light [data-testid="stMetric"] label { color: #6e6580 !important; }
-    body.datara-theme-light .stButton > button {
-        background: var(--accent-primary) !important;
-        color: #161121 !important;
-        box-shadow: 0 2px 12px rgba(169, 120, 244, 0.25) !important;
-    }
-    body.datara-theme-light .datara-content-panel,
-    body.datara-theme-light .datara-explanation-box {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
-    }
-    body.datara-theme-light .datara-content-panel .datara-panel-title,
-    body.datara-theme-light .datara-finding-label { color: #6e6580 !important; }
-    body.datara-theme-light .datara-content-panel .datara-panel-body,
-    body.datara-theme-light .datara-finding-value { color: #4a4358 !important; }
-    body.datara-theme-light .datara-finding-card {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-    }
-    body.datara-theme-light [data-testid="stTabs"] .stButton > button {
-        background: #ffffff !important;
-        color: #6e6580 !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-    }
-    body.datara-theme-light [data-testid="stTabs"] .stButton > button:hover {
-        border-color: var(--accent-primary) !important;
-        color: #1a1525 !important;
-    }
-    body.datara-theme-light .datara-ask-ai-response,
-    body.datara-theme-light [data-testid="stChatMessage"] {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-    }
-    body.datara-theme-light .datara-ask-ai-response-body { color: #4a4358 !important; }
-    body.datara-theme-light [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"],
-    body.datara-theme-light [data-testid="stChatMessage"] > div > div:first-child {
-        background: #ebe8f2 !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-        color: #6e6580 !important;
-    }
-    body.datara-theme-light [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] path,
-    body.datara-theme-light [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] circle,
-    body.datara-theme-light [data-testid="stChatMessage"] > div > div:first-child path,
-    body.datara-theme-light [data-testid="stChatMessage"] > div > div:first-child circle {
-        fill: #6e6580 !important;
-        stroke: #6e6580 !important;
-    }
-    body.datara-theme-light [data-testid="stChatInput"] {
-        background: #ffffff !important;
-        border-color: rgba(126, 90, 182, 0.25) !important;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
-    }
-    body.datara-theme-light [data-testid="stChatInput"] textarea { color: #1a1525 !important; }
-    body.datara-theme-light .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button {
-        background: rgba(126, 90, 182, 0.12) !important;
-        color: #6e6580 !important;
-        border-color: rgba(126, 90, 182, 0.2) !important;
-    }
-    body.datara-theme-light .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button:hover {
-        background: rgba(126, 90, 182, 0.18) !important;
-        border-color: rgba(126, 90, 182, 0.3) !important;
-    }
-    body.datara-theme-light .datara-header-brand { color: #1a1525 !important; }
-    /* Header segment controls in light mode */
-    body.datara-theme-light #datara-header-lang + * [data-testid="stHorizontalBlock"],
-    body.datara-theme-light #datara-header-lang ~ * [data-testid="stHorizontalBlock"],
-    body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"],
-    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] {
-        background: #f5f3f8 !important; border-color: rgba(126, 90, 182, 0.2) !important;
-    }
-    body.datara-theme-light #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
-    body.datara-theme-light #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
-    body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
-    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] button {
-        color: #6e6580 !important;
-    }
-    body.datara-theme-light:not(.datara-lang-ar) #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-    body.datara-theme-light.datara-lang-ar #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
-        color: #161121 !important;
-    }
-    body.datara-theme-light .streamlit-expanderHeader,
-    body.datara-theme-light [data-testid="stExpander"] summary { color: #4a4358 !important; }
-    body.datara-theme-light [data-testid="stAlert"] { background: #faf9fc !important; border-color: rgba(126, 90, 182, 0.25) !important; }
-
     /* RTL + Noto Sans Arabic for Arabic */
     body.datara-lang-ar [data-testid="stAppViewContainer"],
     body.datara-lang-ar .block-container,
@@ -1367,7 +1336,8 @@ def apply_css():
     body.datara-lang-ar .stButton button,
     body.datara-lang-ar .datara-content-panel,
     body.datara-lang-ar .datara-finding-card,
-    body.datara-lang-ar .datara-ask-ai-response-body {
+    body.datara-lang-ar .datara-ask-ai-response-body,
+    body.datara-lang-ar .datara-ask-ai-user-bubble {
         font-family: "Noto Sans Arabic", var(--font-sans) !important;
     }
     body.datara-lang-ar [data-testid="stAppViewContainer"],
@@ -1401,116 +1371,46 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# Theme + language: inject config and run script immediately + on load (so light mode applies)
-_theme = st.session_state.get("theme", "dark")
+# Lang: set body class for RTL + Noto Sans Arabic (theme is server-driven via :root)
 _lang = st.session_state.get("lang", "en")
 st.markdown(
-    f'<div id="datara-config" data-theme="{_theme}" data-lang="{_lang}"></div>'
-    r'<script>(function(){var run=function(){var c=document.getElementById("datara-config");if(c){var t=c.getAttribute("data-theme"),l=c.getAttribute("data-lang");'
-    r'document.body.classList.toggle("datara-theme-light",t==="light");document.body.classList.toggle("datara-lang-ar",l==="ar");}};'
-    r'run();document.addEventListener("DOMContentLoaded",run);})();</script>',
+    f'<div id="datara-lang-config" data-lang="{_lang}"></div>'
+    r'<script>(function(){var c=document.getElementById("datara-lang-config");if(c&&c.getAttribute("data-lang")==="ar")document.body.classList.add("datara-lang-ar");else document.body.classList.remove("datara-lang-ar");})();</script>',
     unsafe_allow_html=True,
 )
 
-# Header: brand | custom language switcher | custom theme switcher (no Streamlit radio)
-_h1, _h2, _h3 = st.columns([2, 1, 1])
+# Header: brand | custom segment controls (links; no Streamlit widgets)
+_theme = st.session_state.get("theme", "dark")
+_seg_lang = (
+    f'<div class="datara-seg">'
+    f'<a href="?lang=en" class="datara-seg-opt{" datara-seg-active" if st.session_state.lang == "en" else ""}">{html.escape(t("lang_en"))}</a>'
+    f'<a href="?lang=ar" class="datara-seg-opt{" datara-seg-active" if st.session_state.lang == "ar" else ""}">{html.escape(t("lang_ar"))}</a>'
+    f'</div>'
+)
+_seg_theme = (
+    f'<div class="datara-seg">'
+    f'<a href="?theme=dark" class="datara-seg-opt{" datara-seg-active" if st.session_state.theme == "dark" else ""}">{html.escape(t("theme_dark"))}</a>'
+    f'<a href="?theme=light" class="datara-seg-opt{" datara-seg-active" if st.session_state.theme == "light" else ""}">{html.escape(t("theme_light"))}</a>'
+    f'</div>'
+)
+_h1, _h2 = st.columns([2, 1])
 with _h1:
     st.markdown('<span class="datara-header-brand">Datara</span>', unsafe_allow_html=True)
 with _h2:
-    st.markdown('<div id="datara-header-lang" class="datara-seg-marker"></div>', unsafe_allow_html=True)
-    _la, _lb = st.columns(2)
-    with _la:
-        if st.button(t("lang_en"), key="btn_lang_en"):
-            st.session_state.lang = "en"
-            st.rerun()
-    with _lb:
-        if st.button(t("lang_ar"), key="btn_lang_ar"):
-            st.session_state.lang = "ar"
-            st.rerun()
-with _h3:
-    st.markdown('<div id="datara-header-theme" class="datara-seg-marker"></div>', unsafe_allow_html=True)
-    _ta, _tb = st.columns(2)
-    with _ta:
-        if st.button(t("theme_dark"), key="btn_theme_dark"):
-            st.session_state.theme = "dark"
-            st.rerun()
-    with _tb:
-        if st.button(t("theme_light"), key="btn_theme_light"):
-            st.session_state.theme = "light"
-            st.rerun()
-
-# Custom segmented control CSS: pill container + active state from body class (no Streamlit radio)
-st.markdown("""
-<style>
-.datara-header-brand { font-family: var(--font-sans); font-size: 18px; font-weight: 600; color: var(--text-primary); }
-.datara-seg-marker { display: none !important; }
-/* Lang segment: container = one pill */
-/* Lang segment: pill container (next sibling or descendant of next sibling) */
-#datara-header-lang + * [data-testid="stHorizontalBlock"],
-#datara-header-lang ~ * [data-testid="stHorizontalBlock"] {
-    display: inline-flex !important; gap: 0 !important;
-    background: var(--bg-panel) !important; border: 1px solid var(--border-dim) !important;
-    border-radius: 999px !important; padding: 3px !important;
-}
-#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"],
-#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; }
-#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton,
-#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton { width: 100% !important; }
-#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
-    border-radius: 999px 0 0 999px !important; border: none !important;
-    background: transparent !important; color: var(--text-muted) !important;
-    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
-    box-shadow: none !important; width: 100% !important;
-}
-#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
-    border-radius: 0 999px 999px 0 !important; border: none !important;
-    background: transparent !important; color: var(--text-muted) !important;
-    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
-    box-shadow: none !important; width: 100% !important;
-}
-body:not(.datara-lang-ar) #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-body:not(.datara-lang-ar) #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
-    background: var(--accent-primary) !important; color: #161121 !important;
-}
-body.datara-lang-ar #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-body.datara-lang-ar #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
-    background: var(--accent-primary) !important; color: #161121 !important;
-}
-/* Theme segment */
-#datara-header-theme + * [data-testid="stHorizontalBlock"],
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] {
-    display: inline-flex !important; gap: 0 !important;
-    background: var(--bg-panel) !important; border: 1px solid var(--border-dim) !important;
-    border-radius: 999px !important; padding: 3px !important; margin-left: 8px !important;
-}
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"],
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; }
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton,
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton { width: 100% !important; }
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
-    border: none !important; background: transparent !important; color: var(--text-muted) !important;
-    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
-    box-shadow: none !important; width: 100% !important;
-}
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button { border-radius: 999px 0 0 999px !important; }
-#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button { border-radius: 0 999px 999px 0 !important; }
-body:not(.datara-theme-light) #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
-body:not(.datara-theme-light) #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
-    background: var(--accent-primary) !important; color: #161121 !important;
-}
-body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
-body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
-    background: var(--accent-primary) !important; color: #161121 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="datara-header-controls">{_seg_lang}{_seg_theme}</div>'
+        '<style>'
+        '.datara-header-brand{font-family:var(--font-sans);font-size:18px;font-weight:600;color:var(--text-primary);}'
+        '.datara-header-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}'
+        '.datara-seg{display:inline-flex;background:var(--bg-panel);border:1px solid var(--border-dim);border-radius:999px;padding:3px;}'
+        '.datara-seg-opt{font-size:12px;font-weight:500;padding:6px 14px;border-radius:999px;color:var(--text-muted);text-decoration:none;transition:background .2s,color .2s;}'
+        '.datara-seg-opt:first-child{border-radius:999px 0 0 999px;}'
+        '.datara-seg-opt:last-child{border-radius:0 999px 999px 0;}'
+        '.datara-seg-opt:hover{color:var(--text-primary);}'
+        '.datara-seg-opt.datara-seg-active{background:var(--accent-primary);color:#161121;}'
+        '</style>',
+        unsafe_allow_html=True,
+    )
 
 # 1. Hero (translated)
 st.title(t("hero_title"))
@@ -1813,11 +1713,10 @@ if st.session_state.pending_question:
     st.session_state.chat_history.append({"role": "assistant", "content": answer})
     st.rerun()
 
-# Render history: user = chat_message (compact), assistant = full-width panel only
+# Render history: user = custom HTML row (no st.chat_message to avoid duplication), assistant = full-width panel
 for msg in st.session_state.chat_history:
     if msg["role"] == "user":
-        with st.chat_message("user"):
-            st.write(msg["content"])
+        st.markdown(_datara_user_msg_html(msg["content"]), unsafe_allow_html=True)
     else:
         st.markdown(_datara_ask_ai_response_panel(msg["content"]), unsafe_allow_html=True)
 
