@@ -942,7 +942,7 @@ def apply_css():
     }
     [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
 
-    /* Chat — Ask AI: full-width stable panel, no narrow container or overflow bugs */
+    /* Chat — Ask AI: correct container hierarchy (avatar compact, message body full width) */
     [data-testid="stChatMessage"] {
         background: var(--bg-panel) !important;
         border: 1px solid var(--border-dim) !important;
@@ -950,34 +950,29 @@ def apply_css():
         color: var(--text-secondary) !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-width: 0 !important;
         margin-bottom: 16px !important;
         padding: 22px 26px !important;
         box-sizing: border-box !important;
         overflow: visible !important;
     }
+    /* Inner flex row: avatar (compact) | content (takes remaining width) */
     [data-testid="stChatMessage"] > div {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: flex-start !important;
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
+        gap: 16px !important;
     }
-    [data-testid="stChatMessage"] > div > div:last-child,
-    [data-testid="stChatMessage"] > div:last-child {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        width: 100% !important;
-        overflow: visible !important;
-    }
-    [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
-        width: 100% !important;
-        max-width: none !important;
-        min-width: 0 !important;
-    }
-    /* Avatar/icon container: muted dark panel or soft purple */
-    [data-testid="stChatMessage"] > div:first-child,
+    /* Avatar/icon column: fixed narrow width, must not grow */
+    [data-testid="stChatMessage"] > div > div:first-child,
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
+        flex: 0 0 auto !important;
+        width: 40px !important;
+        min-width: 40px !important;
+        max-width: 40px !important;
         background: var(--bg-surface) !important;
         border-radius: var(--radius-sm) !important;
         color: var(--text-muted) !important;
@@ -987,10 +982,26 @@ def apply_css():
         filter: brightness(1.1) contrast(0.95) !important;
     }
     /* Assistant icon: soft lilac glow */
-    [data-testid="stChatMessage"][data-role="assistant"] > div:first-child,
+    [data-testid="stChatMessage"][data-role="assistant"] > div > div:first-child,
     [data-testid="stChatMessage"][data-role="assistant"] [data-testid="stChatMessageAvatar"] {
         background: rgba(212, 171, 254, 0.18) !important;
         border: 1px solid var(--border-medium) !important;
+    }
+    /* Content column: must take all remaining width (full-width message body) */
+    [data-testid="stChatMessage"] > div > div:last-child,
+    [data-testid="stChatMessage"] > div:last-child {
+        flex: 1 1 0% !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        display: block !important;
     }
 
     /* Universal AI assistant section — separator and heading */
@@ -1076,7 +1087,13 @@ def apply_css():
         line-height: 1.55;
         color: var(--text-secondary);
     }
-    [data-testid="stChatMessage"] [data-testid="stMarkdown"],
+    /* Markdown wrapper must be full-width block so message body is not squeezed */
+    [data-testid="stChatMessage"] [data-testid="stMarkdown"] {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+    }
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p {
         max-width: none !important;
         width: 100% !important;
@@ -1129,16 +1146,21 @@ def apply_css():
     }
     .datara-finding-value br { margin: 0.5em 0; }
 
-    /* Chat response — full-width reading panel, internal scroll only */
+    /* Chat response — full-width message body (correct hierarchy: compact row + body below) */
     .datara-chat-response {
-        margin-top: 10px;
-        width: 100%;
-        max-width: 100%;
-        min-width: 0;
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        margin-top: 0;
         padding-right: 6px;
         box-sizing: border-box;
     }
     .datara-chat-body {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         max-height: 50vh;
         min-height: 2rem;
         overflow-y: auto;
@@ -1147,8 +1169,6 @@ def apply_css():
         line-height: 1.6;
         color: var(--text-secondary);
         padding: 6px 12px 6px 0;
-        width: 100%;
-        max-width: 100%;
         box-sizing: border-box;
         word-wrap: break-word;
         overflow-wrap: break-word;
