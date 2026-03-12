@@ -3,11 +3,12 @@ import html
 import json
 import pandas as pd
 import streamlit as st
+import plotly.express as px
 from openai import OpenAI
 
 st.set_page_config(
     page_title="Data Analysis AI Agent",
-    page_icon="⚈",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -54,46 +55,6 @@ TRANSLATIONS = {
         "chart_not_available": "Chart not available",
         "analyzing": "Analyzing data...",
         "file_meta": "{size} MB • {rows:,} rows",
-        "suggested_questions": "Suggested questions",
-        "q_top_revenue": "Top 5 rows by revenue",
-        "q_region_growth": "Which region has the most growth?",
-        "q_trends": "What are the main trends?",
-        "q_anomalies": "Any anomalies or outliers?",
-        "q_recommend": "What do you recommend?",
-        "data_quality": "Data quality",
-        "duplicates": "Duplicates",
-        "missing_vals": "Missing",
-        "studio": "Studio",
-        "data_health": "Data Health",
-        "readiness": "Readiness Score",
-        "null_pct": "Null %",
-        "dataset_profiling": "Dataset Profiling",
-        "rec_measures": "Recommended Measures",
-        "business_lens": "Business Lens",
-        "quality_metrics": "Quality & Shape Metrics",
-        "integrity": "Integrity Score",
-        "usable_cols": "Usable Columns",
-        "missing_cells": "Missing Cells",
-        "top_finding": "Top Finding",
-        "biggest_risk": "Biggest Risk",
-        "notable_trend": "Notable Trend",
-        "chart_studio": "Chart Studio",
-        "regen": "Regenerate",
-        "ai_insight": "AI Insight",
-        "session_memory": "Session Memory",
-        "segment_compare": "Segment Compare",
-        "primary_segment": "Primary Segment",
-        "compare_against": "Compare Against",
-        "suggested_q": "Suggested Questions",
-        "last_sync": "Last sync",
-        "export_csv": "Export CSV",
-        "gen_report": "Generate Executive Report",
-        "exec": "Exec",
-        "analyst": "Analyst",
-        "story": "Story",
-        "finance_lens": "Finance & Growth",
-        "ops_lens": "Operations Efficiency",
-        "sales_lens": "Sales Performance",
     },
     "ar": {
         "app_title": "وكيل تحليل البيانات بالذكاء الاصطناعي",
@@ -131,45 +92,6 @@ TRANSLATIONS = {
         "chart_not_available": "الرسم غير متوفر",
         "analyzing": "جاري التحليل...",
         "file_meta": "{size} ميجابايت • {rows:,} صف",
-        "suggested_questions": "أسئلة مقترحة",
-        "q_top_revenue": "أعلى 5 صفوف حسب الإيرادات",
-        "q_region_growth": "أي منطقة لديها أكبر نمو؟",
-        "q_trends": "ما الاتجاهات الرئيسية؟",
-        "q_anomalies": "أي شذوذ أو قيم متطرفة؟",
-        "q_recommend": "ماذا توصي؟",
-        "data_quality": "جودة البيانات",
-        "duplicates": "التكرارات",
-        "missing_vals": "القيم المفقودة",
-        "studio": "ستوديو",
-        "data_health": "لوحة صحة البيانات",
-        "readiness": "درجة الجاهزية",
-        "null_pct": "نسبة الفراغات",
-        "dataset_profiling": "تحليل مجموعة البيانات",
-        "rec_measures": "المقاييس الموصى بها",
-        "business_lens": "المنظور التجاري",
-        "quality_metrics": "مقاييس الجودة والشكل",
-        "integrity": "درجة النزاهة",
-        "usable_cols": "الأعمدة القابلة للاستخدام",
-        "missing_cells": "الخلايا المفقودة",
-        "top_finding": "أبرز النتائج",
-        "biggest_risk": "أكبر المخاطر",
-        "notable_trend": "اتجاه لافت",
-        "chart_studio": "استوديو الرسوم البيانية",
-        "regen": "إعادة التوليد",
-        "ai_insight": "رؤية الذكاء الاصطناعي",
-        "session_memory": "ذاكرة الجلسة",
-        "segment_compare": "مقارنة الشرائح",
-        "primary_segment": "الشريحة الأساسية",
-        "compare_against": "المقارنة مع",
-        "last_sync": "آخر مزامنة",
-        "export_csv": "تصدير CSV",
-        "gen_report": "إنشاء تقرير تنفيذي",
-        "exec": "تنفيذي",
-        "analyst": "محلل",
-        "story": "قصة",
-        "finance_lens": "المالية والنمو",
-        "ops_lens": "كفاءة العمليات",
-        "sales_lens": "أداء المبيعات",
     },
 }
 
@@ -194,79 +116,138 @@ if "lang" not in st.session_state:
     st.session_state.lang = "en"
 if "pending_question" not in st.session_state:
     st.session_state.pending_question = None
-# -----------------------------
-# Helpers (Streamlit-specific + imports from app_helpers)
-# -----------------------------
-from app_helpers import (
-    load_data,
-    file_size_mb,
-    infer_data_types,
-    profile_dataframe,
-    parse_analysis_json,
-    prepare_chart_data,
-    render_chart_fig,
-)
 
 
+# -----------------------------
+# Helpers
+# -----------------------------
 def reset_app_state():
     st.session_state.analysis_result = None
     st.session_state.chat_history = []
     st.session_state.last_uploaded_name = None
 
 
-def ask_agent_for_analysis(df, profile=None):
+def load_data(uploaded_file):
+    if uploaded_file.name.endswith(".csv"):
+        return pd.read_csv(uploaded_file)
+    return pd.read_excel(uploaded_file)
+
+
+def file_size_mb(uploaded_file):
+    return round(uploaded_file.size / (1024 * 1024), 1)
+
+
+def infer_data_types(df):
+    kinds = set()
+    for col in df.columns:
+        dtype = str(df[col].dtype)
+        if "int" in dtype or "float" in dtype:
+            kinds.add("Numeric")
+        elif "object" in dtype or "category" in dtype:
+            kinds.add("Categorical")
+        elif "datetime" in dtype:
+            kinds.add("Time-series")
+    return ", ".join(sorted(kinds)) if kinds else "Mixed"
+
+
+def parse_analysis_json(text):
+    """Extract and parse JSON from model output; return None or fallback on failure."""
+    text = (text or "").strip()
+    if not text:
+        return None
+    start = text.find("{")
+    if start == -1:
+        return None
+    depth = 0
+    end = -1
+    for i in range(start, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    if end == -1:
+        return None
+    try:
+        return json.loads(text[start:end])
+    except json.JSONDecodeError:
+        pass
+    return {
+        "summary": {"overview": "Analysis could not be parsed.", "key_insights": [], "recommendations": [], "final_summary": ""},
+        "charts": [],
+    }
+
+
+def profile_dataframe(df):
+    """Basic profile: missing counts, duplicates, column types, readiness."""
+    profile = {
+        "missing_pct": {},
+        "missing_total": 0,
+        "duplicate_rows": int(df.duplicated().sum()),
+        "total_rows": len(df),
+        "column_types": {},
+    }
+    for col in df.columns:
+        null_count = df[col].isna().sum()
+        pct = round(100 * null_count / len(df), 1) if len(df) else 0
+        profile["missing_pct"][col] = pct
+        profile["missing_total"] += null_count
+        dtype = str(df[col].dtype)
+        if "int" in dtype or "float" in dtype:
+            profile["column_types"][col] = "numeric"
+        elif "datetime" in dtype:
+            profile["column_types"][col] = "datetime"
+        else:
+            profile["column_types"][col] = "categorical"
+    avg_null = sum(profile["missing_pct"].values()) / len(profile["missing_pct"]) if profile["missing_pct"] else 0
+    profile["readiness_pct"] = max(0, min(100, round(100 - avg_null)))
+    return profile
+
+
+def ask_agent_for_analysis(df):
     columns = list(df.columns)
     dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
-    sample_rows = df.head(15).to_dict(orient="records")
+    sample_rows = df.head(10).to_dict(orient="records")
     for row in sample_rows:
         for k, v in row.items():
             if hasattr(v, "isoformat"):
                 row[k] = v.isoformat()
-    profile = profile or profile_dataframe(df)
-    prompt = f"""You are a professional data analysis AI agent. Analyze this dataset and return ONLY valid JSON, no markdown or explanation.
-
-COLUMNS (use these exact names): {columns}
-DTYPES: {dtypes}
-SAMPLE (first 15 rows): {json.dumps(sample_rows, default=str)}
-DATA QUALITY: duplicate_rows={profile['duplicate_rows']}, high_missing_columns={[c for c, p in profile['missing_pct'].items() if p > 10]}.
-
-Return exactly this JSON structure (no other text):
+    prompt = f"""
+You are a professional data analysis AI agent.
+Analyze the uploaded dataset and return ONLY valid JSON.
+Dataset columns: {columns}
+Dataset types: {dtypes}
+Sample rows: {json.dumps(sample_rows, default=str)}
+Return JSON in exactly this structure:
 {{
   "summary": {{
-    "overview": "2-3 sentence overview of the dataset and what it contains",
+    "overview": "brief overview of the dataset",
     "key_insights": ["insight 1", "insight 2", "insight 3"],
-    "recommendations": ["actionable recommendation 1", "recommendation 2"],
-    "final_summary": "one sentence executive conclusion"
+    "recommendations": ["recommendation 1", "recommendation 2"],
+    "final_summary": "clear professional final summary"
   }},
   "charts": [
-    {{ "title": "Chart title", "chart_type": "bar", "x_column": "exact_column_name", "y_column": "exact_column_name", "aggregation": "sum" }},
-    {{ "title": "Chart title", "chart_type": "line", "x_column": "exact_column_name", "y_column": "exact_column_name", "aggregation": "mean" }}
+    {{ "title": "chart title", "chart_type": "bar", "x_column": "exact column name", "y_column": "exact column name", "aggregation": "sum" }},
+    {{ "title": "chart title", "chart_type": "line", "x_column": "exact column name", "y_column": "exact column name", "aggregation": "mean" }}
   ]
 }}
-RULES: Use ONLY column names from the list above. chart_type: bar, line, pie, scatter. aggregation: sum, mean, count, none. Return at least 2 charts. x_column and y_column must exist in columns. Output only the JSON object."""
+Rules: Return at least 2 charts; chart_type: bar, line, pie, scatter; aggregation: sum, mean, count, none; use exact column names; keep summary concise.
+"""
     try:
         response = client.responses.create(model="gpt-4.1-mini", input=prompt)
         raw = (response.output_text or "").strip()
         result = parse_analysis_json(raw)
         if not result:
             result = {"summary": {"overview": "Analysis unavailable.", "key_insights": [], "recommendations": [], "final_summary": ""}, "charts": []}
-        # Validate charts: only keep those with existing columns
         valid_cols = set(df.columns)
-        valid_charts = []
-        for ch in result.get("charts", []):
-            x, y = ch.get("x_column"), ch.get("y_column")
-            if x in valid_cols and (y in valid_cols or ch.get("aggregation") == "count"):
-                valid_charts.append(ch)
+        valid_charts = [ch for ch in result.get("charts", []) if ch.get("x_column") in valid_cols and (ch.get("y_column") in valid_cols or ch.get("aggregation") == "count")]
         result["charts"] = valid_charts if valid_charts else result.get("charts", [])[:2]
         return result
     except Exception as e:
         return {
-            "summary": {
-                "overview": f"Analysis could not be completed: {str(e)[:200]}.",
-                "key_insights": [],
-                "recommendations": [],
-                "final_summary": "",
-            },
+            "summary": {"overview": f"Analysis failed: {str(e)[:150]}.", "key_insights": [], "recommendations": [], "final_summary": ""},
             "charts": [],
         }
 
@@ -286,64 +267,88 @@ Answer clearly and directly based only on the uploaded data and existing analysi
     return response.output_text
 
 
+def prepare_chart_data(df, x_column, y_column, aggregation):
+    data = df.copy()
+    if aggregation == "sum":
+        data = data.groupby(x_column, as_index=False)[y_column].sum()
+    elif aggregation == "mean":
+        data = data.groupby(x_column, as_index=False)[y_column].mean()
+    elif aggregation == "count":
+        data = data.groupby(x_column, as_index=False).size()
+        data.columns = [x_column, "count"]
+        y_column = "count"
+    return data, y_column
+
+
+def render_chart_fig(df, chart, is_dark):
+    chart_type = chart.get("chart_type", "bar")
+    x_column = chart.get("x_column")
+    y_column = chart.get("y_column")
+    aggregation = chart.get("aggregation", "sum")
+    title = chart.get("title", "Chart")
+    if not x_column or not y_column:
+        return None
+    data, final_y = prepare_chart_data(df, x_column, y_column, aggregation)
+    if chart_type == "bar":
+        fig = px.bar(data, x=x_column, y=final_y, title=None, template="plotly_white")
+    elif chart_type == "line":
+        fig = px.line(data, x=x_column, y=final_y, title=None, template="plotly_white")
+    elif chart_type == "pie":
+        fig = px.pie(data, names=x_column, values=final_y, title=None)
+    elif chart_type == "scatter":
+        fig = px.scatter(data, x=x_column, y=final_y, title=None, template="plotly_white")
+    else:
+        return None
+    if is_dark:
+        fig.update_layout(
+            paper_bgcolor="rgba(18,18,22,0.35)",
+            plot_bgcolor="rgba(18,18,22,0.15)",
+            font=dict(color="#F3F4F6", size=12),
+            margin=dict(l=24, r=24, t=12, b=24),
+            xaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)"),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)")
+        )
+    else:
+        fig.update_layout(
+            paper_bgcolor="rgba(255,255,255,0.6)",
+            plot_bgcolor="rgba(248,250,252,0.8)",
+            font=dict(color="#0f172a", size=12),
+            margin=dict(l=24, r=24, t=12, b=24),
+            xaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)"),
+            yaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)")
+        )
+    return fig
+
+
 # -----------------------------
-# Dashboard UI – compact three-rail layout, accents
+# Minimal UI (Streamlit-native, no layout hacks)
 # -----------------------------
-def apply_dashboard_css():
+def apply_minimal_css():
     st.markdown("""
     <style>
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
-    .block-container { max-width: 1400px; padding: 1rem 1.25rem 1.5rem; }
-    [data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
-    /* Compact header */
-    h1 { font-size: 1.35rem !important; margin-bottom: 0.15rem !important; }
-    [data-testid="stMarkdown"] p { margin-bottom: 0.25rem !important; font-size: 0.875rem !important; }
-    /* Accent: primary buttons */
-    .stButton > button {
-        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-        color: #fff !important; border: none !important;
-        font-weight: 600 !important; border-radius: 8px !important;
-        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
-    }
-    .stButton > button:hover { box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); filter: brightness(1.05); }
-    /* Metric cards: compact, subtle border */
-    [data-testid="stMetric"] { padding: 0.5rem 0.75rem; background: rgba(30, 27, 75, 0.4); border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.15); }
-    [data-testid="stMetric"] label { color: #a5b4fc !important; font-size: 0.75rem !important; }
-    [data-testid="stMetric"] [data-testid="stMetricValue"] { color: #e0e7ff !important; font-size: 1.1rem !important; }
-    /* Expanders: tighter */
-    .streamlit-expanderHeader { padding: 0.4rem 0.6rem !important; font-size: 0.9rem !important; }
-    .streamlit-expanderContent { padding: 0.5rem 0.75rem !important; }
-    /* Chat messages */
-    [data-testid="stChatMessage"] { padding: 0.5rem 0.75rem !important; }
-    /* Suggested question chips: accent when possible */
-    div[data-testid="column"] button { border-radius: 6px !important; }
-    /* Dark base for dashboard feel */
-    [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0f0f14 0%, #12121a 100%) !important; }
-    .stPlotlyChart { border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.12); }
-    /* Keep upload/input areas readable on dark */
-    [data-testid="stFileUploader"] { border-radius: 8px; }
-    [data-testid="stChatInput"] textarea { border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.25); }
+    .block-container { max-width: 1000px; padding-top: 1.5rem; padding-bottom: 2rem; }
     </style>
     """, unsafe_allow_html=True)
 
 
 # -----------------------------
-# Render – dashboard layout
+# Render
 # -----------------------------
-apply_dashboard_css()
+apply_minimal_css()
 
-# Compact top line: title + badge
-st.markdown(f'<p style="margin:0; font-size:0.8rem; color:#818cf8;">{t("badge")}</p>', unsafe_allow_html=True)
+# 1. Header
 st.title(t("app_title"))
+st.caption(t("badge"))
 
-# --- Upload (full width so we can branch before rails) ---
+# 2. Upload block
+st.subheader(t("data_source"))
 uploaded_file = st.file_uploader(
     t("drag_drop") + " — " + t("supports"),
     type=["csv", "xlsx"],
     key="main_uploader",
-    label_visibility="collapsed"
 )
 
 if uploaded_file is None:
@@ -368,83 +373,100 @@ size_mb = file_size_mb(uploaded_file)
 n_rows, n_cols = df.shape
 result = st.session_state.analysis_result
 
-# ----- Three-rail dashboard -----
-left_rail, center_rail, right_rail = st.columns([1, 2.6, 1])
+# 3. KPI row
+st.subheader(t("dataset_overview"))
+k1, k2, k3, k4, k5 = st.columns(5)
+with k1:
+    st.metric(t("total_rows"), f"{n_rows:,}")
+with k2:
+    st.metric(t("total_columns"), n_cols)
+with k3:
+    st.metric(t("duplicates"), profile["duplicate_rows"])
+with k4:
+    st.metric(t("missing_vals"), profile["missing_total"])
+with k5:
+    st.metric("Readiness", f"{profile['readiness_pct']}%")
+st.caption(f"{uploaded_file.name} · {size_mb:.2f} MB · {t('data_type')}: {infer_data_types(df)}")
 
-# --- LEFT: Upload context, actions, export ---
-with left_rail:
-    st.caption(t("data_source"))
-    st.caption(f"**{uploaded_file.name}** · {size_mb:.2f} MB")
-    if st.button(t("generate_summary_short"), key="cta_gen", use_container_width=True):
-        with st.spinner(t("analyzing")):
-            st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
-        st.rerun()
-    st.caption("Export")
-    st.download_button(
-        t("export_csv"),
-        df.to_csv(index=False).encode("utf-8"),
-        file_name=uploaded_file.name or "data.csv",
-        mime="text/csv",
-        key="dl_csv",
-        use_container_width=True
-    )
-    rep = (result.get("summary", {}) if result else {}) or {}
-    rep_text = (
-        "# Executive Report\n\n" + (rep.get("overview") or "")
-        + "\n\n## Key insights\n" + "\n".join(f"- {x}" for x in (rep.get("key_insights") or []))
-    )
-    st.download_button(
-        t("gen_report"),
-        rep_text.encode("utf-8"),
-        file_name="executive_report.md",
-        mime="text/markdown",
-        key="dl_report",
-        use_container_width=True
-    )
+# Generate summary (above tabs so it's always visible)
+if st.button(t("generate_summary_short"), key="cta_gen"):
+    with st.spinner(t("analyzing")):
+        st.session_state.analysis_result = ask_agent_for_analysis(df)
+    st.rerun()
 
-# --- CENTER: Metrics, summary, charts, preview ---
-with center_rail:
-    st.caption(t("dataset_overview"))
-    r1, r2, r3, r4 = st.columns(4)
-    with r1:
-        st.metric(t("total_rows"), f"{n_rows:,}")
-    with r2:
-        st.metric(t("total_columns"), n_cols)
-    with r3:
-        st.metric(t("duplicates"), profile["duplicate_rows"])
-    with r4:
-        st.metric(t("missing_vals"), profile["missing_total"])
+# 4. Main tabbed workspace
+tab_overview, tab_health, tab_insights, tab_charts, tab_ai = st.tabs([
+    "Overview",
+    "Data Health",
+    "Insights",
+    "Charts",
+    "Ask AI",
+])
 
-    if result is not None:
-        st.caption(t("analysis_summary"))
-        summary = result.get("summary") or {}
-        with st.expander(t("overview"), expanded=True):
-            st.write(summary.get("overview") or "—")
-        with st.expander(t("key_insights")):
-            for item in summary.get("key_insights") or []:
-                st.write(f"- {item}")
-        with st.expander(t("recommendations")):
-            for item in summary.get("recommendations") or []:
-                st.write(f"- {item}")
-        with st.expander(t("final_summary")):
-            st.write(summary.get("final_summary") or summary.get("overview") or "—")
-
-        charts = result.get("charts") or []
-        if charts:
-            st.caption(t("visualizations"))
-            for i, ch in enumerate(charts):
-                fig = render_chart_fig(df, ch, is_dark=(st.session_state.get("theme", "light") == "dark"))
-                if fig is not None:
-                    st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
-                else:
-                    st.caption(t("chart_not_available"))
-
+with tab_overview:
+    st.write("**File:**", uploaded_file.name, "·", f"{size_mb:.2f} MB")
+    if result and result.get("summary", {}).get("overview"):
+        st.write("**Overview:**", result["summary"]["overview"])
     st.caption(t("data_preview"))
-    st.dataframe(df.head(100), height=280, use_container_width=True)
+    st.dataframe(df.head(100), height=320, use_container_width=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.download_button("Export CSV", df.to_csv(index=False).encode("utf-8"), file_name=uploaded_file.name or "data.csv", mime="text/csv", key="dl_csv")
+    with c2:
+        rep = (result.get("summary", {}) if result else {}) or {}
+        rep_text = (rep.get("overview") or "") + "\n\n## Key insights\n" + "\n".join(f"- {x}" for x in (rep.get("key_insights") or []))
+        st.download_button("Executive report", rep_text.encode("utf-8"), file_name="executive_report.md", mime="text/markdown", key="dl_report")
 
-# --- RIGHT: AI assistant, suggested Qs, chat ---
-with right_rail:
+with tab_health:
+    st.metric("Duplicate rows", profile["duplicate_rows"])
+    st.metric("Missing cells", profile["missing_total"])
+    st.metric("Readiness", f"{profile['readiness_pct']}%")
+    st.caption("Column types")
+    for col, ctype in list(profile["column_types"].items())[:20]:
+        st.text(f"{col}: {ctype}")
+    if len(profile["column_types"]) > 20:
+        st.caption(f"... and {len(profile['column_types']) - 20} more columns")
+
+with tab_insights:
+    if result is None:
+        st.info("Generate summary above to see insights.")
+    else:
+        summary = result.get("summary") or {}
+        st.write("**" + t("overview") + "**")
+        st.write(summary.get("overview") or "—")
+        st.write("**" + t("key_insights") + "**")
+        for item in summary.get("key_insights") or []:
+            st.write("-", item)
+        st.write("**" + t("recommendations") + "**")
+        for item in summary.get("recommendations") or []:
+            st.write("-", item)
+        st.write("**" + t("final_summary") + "**")
+        st.write(summary.get("final_summary") or "—")
+
+with tab_charts:
+    if result is None:
+        st.info("Generate summary above to see charts.")
+    else:
+        charts = result.get("charts") or []
+        if not charts:
+            st.caption(t("chart_not_available"))
+        for i, ch in enumerate(charts):
+            fig = render_chart_fig(df, ch, st.session_state.theme == "dark")
+            if fig is not None:
+                st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
+            else:
+                st.caption(t("chart_not_available"))
+
+with tab_ai:
     st.caption(t("ask_questions"))
+    # Suggested questions
+    suggested_qs = [
+        "Top 5 rows by revenue",
+        "Which region has the most growth?",
+        "What are the main trends?",
+        "Any anomalies or outliers?",
+        "What do you recommend?",
+    ]
     if st.session_state.pending_question:
         q = st.session_state.pending_question
         st.session_state.pending_question = None
@@ -453,18 +475,13 @@ with right_rail:
             answer = ask_agent_question(df, result or {}, q)
         st.session_state.chat_history.append({"role": "assistant", "content": answer})
         st.rerun()
-
-    st.caption(t("suggested_questions"))
-    suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
     for i, q in enumerate(suggested_qs):
-        if st.button(q, key=f"sug_{i}", use_container_width=True):
+        if st.button(q, key=f"sug_{i}"):
             st.session_state.pending_question = q
             st.rerun()
-
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-
     user_question = st.chat_input(t("ask_ai_placeholder"))
     if user_question:
         st.session_state.chat_history.append({"role": "user", "content": user_question})
