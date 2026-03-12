@@ -865,6 +865,34 @@ def apply_css():
         border-color: var(--border-bright) !important;
     }
 
+    /* Findings — themed cards for clear sectioning and readability */
+    .datara-finding-card {
+        font-family: var(--font-sans);
+        background: var(--bg-panel);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
+    }
+    .datara-finding-card:last-child { margin-bottom: 0; }
+    .datara-finding-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-dim);
+    }
+    .datara-finding-value {
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--text-secondary);
+    }
+    .datara-finding-value br { margin: 0.5em 0; }
+
     /* Tab content — consistent vertical rhythm */
     [data-testid="stTabs"] [data-testid="stVerticalBlock"] {
         padding-top: 20px !important;
@@ -1077,9 +1105,14 @@ with tab_findings:
         ]
         for label, value in cards:
             text = (value if isinstance(value, str) and value.strip() else "") or "—"
-            with st.container():
-                st.markdown(f"**{label}**")
-                st.markdown(text)
+            safe_text = html.escape(text).replace("\n", "<br>")
+            st.markdown(
+                f'<div class="datara-finding-card">'
+                f'<div class="datara-finding-label">{html.escape(label)}</div>'
+                f'<div class="datara-finding-value">{safe_text}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
 
 with tab_charts:
     if result is None:
