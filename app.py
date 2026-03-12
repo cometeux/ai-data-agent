@@ -637,8 +637,9 @@ def apply_css():
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+    /* === Datara theme tokens: dark = :root; light = body.datara-theme-light overrides === */
     :root {
-        /* 🫆 lilac–orchid–violet palette: soft, premium, dark */
+        /* Dark theme (default) — lilac–orchid–violet */
         --bg-base: #06040A;
         --bg-panel: #161121;
         --bg-surface: #2A1E3F;
@@ -665,7 +666,26 @@ def apply_css():
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
 
-    /* === Streamlit theme overrides: no default red/blue, Datara accent only === */
+    /* === HARD OVERRIDE: remove all Streamlit default accents (red/blue), force Datara === */
+    [data-baseweb="radio"] [role="radio"],
+    [data-baseweb="radio"] circle,
+    .stRadio > div [role="radiogroup"] *,
+    [data-baseweb="button"]:focus,
+    [data-baseweb="button"]:focus-visible,
+    [data-baseweb="input"]:focus,
+    [data-baseweb="textarea"]:focus,
+    [data-baseweb="select"]:focus,
+    [data-baseweb="select"]:focus-within,
+    [data-baseweb="slider"]:focus,
+    [data-baseweb="checkbox"]:focus { outline: none !important; border-color: var(--accent-primary) !important; box-shadow: none !important; }
+    [data-baseweb="radio"] [aria-checked="true"] { background: var(--accent-primary) !important; border-color: var(--accent-primary) !important; }
+    [data-baseweb="radio"] [aria-checked="true"] circle { fill: var(--accent-primary) !important; }
+    a:focus, a:focus-visible { outline: none !important; color: var(--accent-primary) !important; }
+    [data-baseweb="tag"] { background: var(--bg-panel) !important; border-color: var(--border-dim) !important; color: var(--text-secondary) !important; }
+    .stRadio, .stRadio * { box-shadow: none !important; }
+    [data-testid="stRadio"] label { background: transparent !important; border: none !important; }
+
+    /* === Streamlit theme overrides: Datara accent only === */
     input:focus, input:focus-visible, textarea:focus, textarea:focus-visible,
     [data-testid="stChatInput"] textarea:focus,
     [data-testid="stChatInput"] textarea:focus-visible,
@@ -972,17 +992,17 @@ def apply_css():
         margin: 0 0 10px 0 !important;
         font-weight: 400 !important;
     }
-    /* Ask AI — suggested chips row: wrap, muted lilac, subtle border, no glow, no icon/animation */
+    /* Ask AI — suggested chips: very muted, calm, secondary (no loud fill) */
     .block-container [data-testid="column"] { min-width: 0 !important; }
     .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button {
         font-family: var(--font-sans) !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
         font-weight: 500 !important;
         color: var(--text-muted) !important;
-        background: rgba(100, 80, 120, 0.22) !important;
-        border: 1px solid rgba(212, 171, 254, 0.12) !important;
+        background: rgba(80, 60, 100, 0.18) !important;
+        border: 1px solid rgba(212, 171, 254, 0.08) !important;
         border-radius: var(--radius-lg) !important;
-        padding: 10px 14px !important;
+        padding: 8px 12px !important;
         box-shadow: none !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
@@ -991,8 +1011,8 @@ def apply_css():
         text-align: left !important;
     }
     .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button:hover {
-        background: rgba(100, 80, 120, 0.32) !important;
-        border-color: rgba(212, 171, 254, 0.2) !important;
+        background: rgba(80, 60, 100, 0.25) !important;
+        border-color: rgba(212, 171, 254, 0.12) !important;
     }
 
     /* Ask AI — response panel (full width, column layout, normal paragraphs, internal scroll) */
@@ -1314,6 +1334,24 @@ def apply_css():
         border-color: rgba(126, 90, 182, 0.3) !important;
     }
     body.datara-theme-light .datara-header-brand { color: #1a1525 !important; }
+    /* Header segment controls in light mode */
+    body.datara-theme-light #datara-header-lang + * [data-testid="stHorizontalBlock"],
+    body.datara-theme-light #datara-header-lang ~ * [data-testid="stHorizontalBlock"],
+    body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"],
+    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] {
+        background: #f5f3f8 !important; border-color: rgba(126, 90, 182, 0.2) !important;
+    }
+    body.datara-theme-light #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
+    body.datara-theme-light #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
+    body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"] button,
+    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] button {
+        color: #6e6580 !important;
+    }
+    body.datara-theme-light:not(.datara-lang-ar) #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+    body.datara-theme-light.datara-lang-ar #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+    body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
+        color: #161121 !important;
+    }
     body.datara-theme-light .streamlit-expanderHeader,
     body.datara-theme-light [data-testid="stExpander"] summary { color: #4a4358 !important; }
     body.datara-theme-light [data-testid="stAlert"] { background: #faf9fc !important; border-color: rgba(126, 90, 182, 0.25) !important; }
@@ -1363,75 +1401,114 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# Theme + language: inject so body gets class for CSS
+# Theme + language: inject config and run script immediately + on load (so light mode applies)
 _theme = st.session_state.get("theme", "dark")
 _lang = st.session_state.get("lang", "en")
 st.markdown(
     f'<div id="datara-config" data-theme="{_theme}" data-lang="{_lang}"></div>'
-    r'<script>(function(){var c=document.getElementById("datara-config");if(!c)return;var t=c.getAttribute("data-theme"),l=c.getAttribute("data-lang");'
-    r'if(t==="light")document.body.classList.add("datara-theme-light");else document.body.classList.remove("datara-theme-light");'
-    r'if(l==="ar")document.body.classList.add("datara-lang-ar");else document.body.classList.remove("datara-lang-ar");})();</script>',
+    r'<script>(function(){var run=function(){var c=document.getElementById("datara-config");if(c){var t=c.getAttribute("data-theme"),l=c.getAttribute("data-lang");'
+    r'document.body.classList.toggle("datara-theme-light",t==="light");document.body.classList.toggle("datara-lang-ar",l==="ar");}};'
+    r'run();document.addEventListener("DOMContentLoaded",run);})();</script>',
     unsafe_allow_html=True,
 )
 
-# Header: brand | language switcher | theme toggle (premium segmented controls)
+# Header: brand | custom language switcher | custom theme switcher (no Streamlit radio)
 _h1, _h2, _h3 = st.columns([2, 1, 1])
 with _h1:
     st.markdown('<span class="datara-header-brand">Datara</span>', unsafe_allow_html=True)
 with _h2:
-    _new_lang = st.radio(
-        "Language",
-        options=["en", "ar"],
-        format_func=lambda x: t("lang_ar") if x == "ar" else t("lang_en"),
-        key="header_lang",
-        horizontal=True,
-        index=1 if st.session_state.lang == "ar" else 0,
-        label_visibility="collapsed",
-    )
-    if _new_lang != st.session_state.lang:
-        st.session_state.lang = _new_lang
-        st.rerun()
+    st.markdown('<div id="datara-header-lang" class="datara-seg-marker"></div>', unsafe_allow_html=True)
+    _la, _lb = st.columns(2)
+    with _la:
+        if st.button(t("lang_en"), key="btn_lang_en"):
+            st.session_state.lang = "en"
+            st.rerun()
+    with _lb:
+        if st.button(t("lang_ar"), key="btn_lang_ar"):
+            st.session_state.lang = "ar"
+            st.rerun()
 with _h3:
-    _new_theme = st.radio(
-        "Theme",
-        options=["dark", "light"],
-        format_func=lambda x: t("theme_light") if x == "light" else t("theme_dark"),
-        key="header_theme",
-        horizontal=True,
-        index=0 if st.session_state.theme == "dark" else 1,
-        label_visibility="collapsed",
-    )
-    if _new_theme != st.session_state.theme:
-        st.session_state.theme = _new_theme
-        st.rerun()
+    st.markdown('<div id="datara-header-theme" class="datara-seg-marker"></div>', unsafe_allow_html=True)
+    _ta, _tb = st.columns(2)
+    with _ta:
+        if st.button(t("theme_dark"), key="btn_theme_dark"):
+            st.session_state.theme = "dark"
+            st.rerun()
+    with _tb:
+        if st.button(t("theme_light"), key="btn_theme_light"):
+            st.session_state.theme = "light"
+            st.rerun()
 
-# Header: premium segmented control styling (no radio dots, shared container, active = accent)
+# Custom segmented control CSS: pill container + active state from body class (no Streamlit radio)
 st.markdown("""
 <style>
 .datara-header-brand { font-family: var(--font-sans); font-size: 18px; font-weight: 600; color: var(--text-primary); }
-/* Scoped to first row after config = header */
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio input { display: none !important; }
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio > div,
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio [role="radiogroup"] {
-    display: flex !important; flex-direction: row !important; gap: 0 !important;
-    background: var(--bg-panel) !important;
-    border: 1px solid var(--border-dim) !important;
-    border-radius: 999px !important;
-    padding: 3px !important;
-    min-height: 36px !important;
+.datara-seg-marker { display: none !important; }
+/* Lang segment: container = one pill */
+/* Lang segment: pill container (next sibling or descendant of next sibling) */
+#datara-header-lang + * [data-testid="stHorizontalBlock"],
+#datara-header-lang ~ * [data-testid="stHorizontalBlock"] {
+    display: inline-flex !important; gap: 0 !important;
+    background: var(--bg-panel) !important; border: 1px solid var(--border-dim) !important;
+    border-radius: 999px !important; padding: 3px !important;
 }
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio label {
-    margin: 0 !important; padding: 6px 14px !important; font-size: 12px !important; font-weight: 500 !important;
-    border-radius: 999px !important; cursor: pointer !important;
+#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"],
+#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; }
+#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton,
+#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton { width: 100% !important; }
+#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
+    border-radius: 999px 0 0 999px !important; border: none !important;
     background: transparent !important; color: var(--text-muted) !important;
-    border: none !important; transition: background 0.2s, color 0.2s !important;
+    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
+    box-shadow: none !important; width: 100% !important;
 }
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio label:hover { color: var(--text-primary) !important; }
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type .stRadio label:has(input:checked) {
+#datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+#datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
+    border-radius: 0 999px 999px 0 !important; border: none !important;
+    background: transparent !important; color: var(--text-muted) !important;
+    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
+    box-shadow: none !important; width: 100% !important;
+}
+body:not(.datara-lang-ar) #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+body:not(.datara-lang-ar) #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
     background: var(--accent-primary) !important; color: #161121 !important;
 }
-/* Spacing between language and theme controls */
-#datara-config ~ [data-testid="stHorizontalBlock"]:first-of-type [data-testid="column"]:nth-child(2) { padding-right: 12px !important; }
+body.datara-lang-ar #datara-header-lang + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+body.datara-lang-ar #datara-header-lang ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
+    background: var(--accent-primary) !important; color: #161121 !important;
+}
+/* Theme segment */
+#datara-header-theme + * [data-testid="stHorizontalBlock"],
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] {
+    display: inline-flex !important; gap: 0 !important;
+    background: var(--bg-panel) !important; border: 1px solid var(--border-dim) !important;
+    border-radius: 999px !important; padding: 3px !important; margin-left: 8px !important;
+}
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"],
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] { min-width: 0 !important; flex: 1 1 0 !important; }
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton,
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"] .stButton { width: 100% !important; }
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
+    border: none !important; background: transparent !important; color: var(--text-muted) !important;
+    font-size: 12px !important; font-weight: 500 !important; padding: 6px 14px !important;
+    box-shadow: none !important; width: 100% !important;
+}
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button { border-radius: 999px 0 0 999px !important; }
+#datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+#datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button { border-radius: 0 999px 999px 0 !important; }
+body:not(.datara-theme-light) #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button,
+body:not(.datara-theme-light) #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:first-child button {
+    background: var(--accent-primary) !important; color: #161121 !important;
+}
+body.datara-theme-light #datara-header-theme + * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button,
+body.datara-theme-light #datara-header-theme ~ * [data-testid="stHorizontalBlock"] [data-testid="column"]:last-child button {
+    background: var(--accent-primary) !important; color: #161121 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
