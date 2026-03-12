@@ -538,6 +538,17 @@ def render_chart_fig(df, chart, is_dark):
 
 
 # -----------------------------
+# Finding card icons (SVG, theme-muted)
+# -----------------------------
+FINDING_ICONS = {
+    "Top Finding": '<span class="datara-finding-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M5 21h14"/></svg></span>',
+    "Biggest Risk": '<span class="datara-finding-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></span>',
+    "Biggest Opportunity": '<span class="datara-finding-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l9.2-9.2M17 17V7H7"/></svg></span>',
+    "Recommended Next Step": '<span class="datara-finding-icon"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>',
+}
+
+
+# -----------------------------
 # Datara UI — design-system fidelity (Inter, JetBrains Mono, #0a0812, #a78bfa)
 # -----------------------------
 def apply_css():
@@ -677,6 +688,7 @@ def apply_css():
         padding: 12px 0 4px 0 !important;
         font-family: var(--font-sans) !important;
     }
+    .streamlit-expanderContent [data-testid="stMarkdown"] { margin-bottom: 0.5em !important; }
 
     /* Tabs — Datara: minimal underline, muted inactive, bright active, premium rhythm */
     [data-testid="stTabs"] { margin-top: 24px; }
@@ -865,30 +877,88 @@ def apply_css():
         border-color: var(--border-bright) !important;
     }
 
-    /* Findings — themed cards for clear sectioning and readability */
+    /* Global readability — content panels and long-form text */
+    .datara-content-panel {
+        font-family: var(--font-sans);
+        background: var(--bg-panel);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-lg);
+        padding: 22px 26px;
+        margin-bottom: 20px;
+        max-width: 72ch;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
+    }
+    .datara-content-panel .datara-panel-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+    }
+    .datara-content-panel .datara-panel-body {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text-secondary);
+    }
+    .datara-content-panel .datara-panel-body br { margin: 0.4em 0; }
+    .datara-explanation-box {
+        font-family: var(--font-sans);
+        background: var(--bg-panel);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        margin-top: 12px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: var(--text-secondary);
+    }
+    [data-testid="stChatMessage"] [data-testid="stMarkdown"],
+    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p {
+        max-width: 65ch !important;
+        line-height: 1.6 !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p { margin-bottom: 0.75em !important; }
+    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p:last-child { margin-bottom: 0 !important; }
+
+    /* Findings — refined spacing, icons, themed cards */
     .datara-finding-card {
         font-family: var(--font-sans);
         background: var(--bg-panel);
         border: 1px solid var(--border-dim);
         border-radius: var(--radius-lg);
-        padding: 20px 24px;
-        margin-bottom: 16px;
+        padding: 22px 26px;
+        margin-bottom: 20px;
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
     }
     .datara-finding-card:last-child { margin-bottom: 0; }
     .datara-finding-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--text-muted);
-        margin-bottom: 8px;
-        padding-bottom: 8px;
+        margin-bottom: 12px;
+        padding-bottom: 12px;
         border-bottom: 1px solid var(--border-dim);
+    }
+    .datara-finding-label .datara-finding-icon {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        opacity: 0.9;
+        color: var(--text-muted);
+    }
+    .datara-finding-label .datara-finding-icon svg {
+        width: 100%;
+        height: 100%;
     }
     .datara-finding-value {
         font-size: 15px;
-        line-height: 1.55;
+        line-height: 1.58;
         color: var(--text-secondary);
     }
     .datara-finding-value br { margin: 0.5em 0; }
@@ -1004,11 +1074,41 @@ tab_overview, tab_health, tab_findings, tab_charts = st.tabs([
 ])
 
 with tab_overview:
-    # Short dataset summary
-    if result and result.get("summary", {}).get("overview"):
-        st.write(result["summary"]["overview"])
-    else:
-        st.write(f"Dataset has **{n_rows:,}** rows and **{n_cols}** columns. Generate summary for an AI overview.")
+    # Short dataset summary — in a readable content panel
+    rep = (result.get("summary", {}) if result else {}) or {}
+    overview_text = (rep.get("overview") or "").strip() if result else ""
+    if not overview_text:
+        overview_text = f"Dataset has {n_rows:,} rows and {n_cols} columns. Generate summary above for an AI overview."
+    safe_overview = html.escape(overview_text).replace("\n", "<br>")
+    st.markdown(
+        f'<div class="datara-content-panel">'
+        f'<div class="datara-panel-title">Summary</div>'
+        f'<div class="datara-panel-body">{safe_overview}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    # Key insights (if present)
+    key_insights = rep.get("key_insights") or []
+    if key_insights:
+        lines = "".join(f"<br>• {html.escape(str(x))}" for x in key_insights[:10])
+        st.markdown(
+            f'<div class="datara-content-panel">'
+            f'<div class="datara-panel-title">Key insights</div>'
+            f'<div class="datara-panel-body">{lines}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+    # Recommendations (if present)
+    recs_list = rep.get("recommendations") or []
+    if recs_list:
+        lines = "".join(f"<br>• {html.escape(str(x))}" for x in recs_list[:10])
+        st.markdown(
+            f'<div class="datara-content-panel">'
+            f'<div class="datara-panel-title">Recommendations</div>'
+            f'<div class="datara-panel-body">{lines}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
     # Detected column types
     ctypes = profile.get("column_types") or {}
     if ctypes:
@@ -1067,30 +1167,39 @@ with tab_overview:
         st.download_button("Executive report", rep_text.encode("utf-8"), file_name="executive_report.md", mime="text/markdown", key="dl_report")
 
 with tab_health:
-    # Missing values summary
     total_cells = (profile.get("total_rows") or 0) * max(len(profile.get("column_types") or {}), 1)
     missing_pct = (100 * profile["missing_total"] / total_cells) if total_cells else 0
-    st.write("**Missing values:**", profile["missing_total"], f"cells ({missing_pct:.1f}% of all cells)")
-    # Duplicate rows
-    st.write("**Duplicate rows:**", profile["duplicate_rows"])
-    # Bad columns (high null)
+    parts = []
+    parts.append(f'<div class="datara-content-panel">')
+    parts.append(f'<div class="datara-panel-title">Missing values</div>')
+    parts.append(f'<div class="datara-panel-body">{profile["missing_total"]} cells ({missing_pct:.1f}% of all cells)</div>')
+    parts.append(f'</div>')
+    parts.append(f'<div class="datara-content-panel">')
+    parts.append(f'<div class="datara-panel-title">Duplicate rows</div>')
+    parts.append(f'<div class="datara-panel-body">{profile["duplicate_rows"]}</div>')
+    parts.append(f'</div>')
     if profile.get("high_null_columns"):
-        st.write("**Columns with highest null %:**")
-        for col, pct in profile["high_null_columns"][:10]:
-            st.write(f"- {col}: {pct}% null")
-    # Mixed types / text-heavy (quality warnings)
+        lines = "".join(f"<br>• {html.escape(col)}: {pct}% null" for col, pct in profile["high_null_columns"][:10])
+        parts.append(f'<div class="datara-content-panel">')
+        parts.append(f'<div class="datara-panel-title">Columns with highest null %</div>')
+        parts.append(f'<div class="datara-panel-body">{lines}</div>')
+        parts.append(f'</div>')
     if profile.get("text_heavy_columns"):
-        st.write("**Text-heavy columns:**", ", ".join(profile["text_heavy_columns"][:8]))
+        txt = html.escape(", ".join(profile["text_heavy_columns"][:8]))
+        parts.append(f'<div class="datara-content-panel"><div class="datara-panel-title">Text-heavy columns</div><div class="datara-panel-body">{txt}</div></div>')
     if profile.get("id_like_columns"):
-        st.caption("ID-like: " + ", ".join(profile["id_like_columns"][:8]))
-    # Cleanup recommendations
+        txt = html.escape(", ".join(profile["id_like_columns"][:8]))
+        parts.append(f'<div class="datara-content-panel"><div class="datara-panel-title">ID-like columns</div><div class="datara-panel-body">{txt}</div></div>')
     recs = profile.get("quality_recommendations") or []
     if recs:
-        st.write("**Cleanup recommendations:**")
-        for rec in recs:
-            st.write("-", rec)
+        lines = "".join(f"<br>• {html.escape(str(r))}" for r in recs)
+        parts.append(f'<div class="datara-content-panel">')
+        parts.append(f'<div class="datara-panel-title">Cleanup recommendations</div>')
+        parts.append(f'<div class="datara-panel-body">{lines}</div>')
+        parts.append(f'</div>')
     if not recs and profile["missing_total"] == 0 and profile["duplicate_rows"] == 0:
-        st.caption("No major data health issues detected.")
+        parts.append(f'<div class="datara-content-panel"><div class="datara-panel-body">No major data health issues detected.</div></div>')
+    st.markdown("".join(parts), unsafe_allow_html=True)
 
 with tab_findings:
     if result is None:
@@ -1106,9 +1215,10 @@ with tab_findings:
         for label, value in cards:
             text = (value if isinstance(value, str) and value.strip() else "") or "—"
             safe_text = html.escape(text).replace("\n", "<br>")
+            icon_html = FINDING_ICONS.get(label, "")
             st.markdown(
                 f'<div class="datara-finding-card">'
-                f'<div class="datara-finding-label">{html.escape(label)}</div>'
+                f'<div class="datara-finding-label">{icon_html}{html.escape(label)}</div>'
                 f'<div class="datara-finding-value">{safe_text}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
@@ -1131,7 +1241,8 @@ with tab_charts:
                     st.caption("Chart could not be rendered.")
                 expl = ch.get("explanation") or st.session_state.chart_explanations.get(i)
                 if expl:
-                    st.caption(expl)
+                    safe_expl = html.escape(expl).replace("\n", "<br>")
+                    st.markdown(f'<div class="datara-explanation-box">{safe_expl}</div>', unsafe_allow_html=True)
                 else:
                     if st.button("Explain this chart", key=f"explain_{i}"):
                         with st.spinner("..."):
