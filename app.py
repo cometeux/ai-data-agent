@@ -22,7 +22,17 @@ TRANSLATIONS = {
     "en": {
         "app_title": "Data Analysis AI Agent",
         "badge": "AI-Powered Analytics",
+        "hero_title": "Is your data usable? What matters? What's next?",
+        "hero_subtitle": "Upload your dataset to generate an instant executive summary and deep-dive analysis.",
         "hero_desc": "Upload your dataset, and I'll automatically generate insights, visual summaries, and actionable recommendations.",
+        "ask_ai_title": "Ask AI",
+        "suggested_label": "Suggested questions (from this dataset):",
+        "chat_placeholder": "Ask anything about your data...",
+        "tab_overview": "Overview",
+        "tab_health": "Data Health",
+        "tab_findings": "Top Findings",
+        "tab_charts": "Charts",
+        "generate_cta": "Generate Executive Summary",
         "data_source": "Data Source",
         "drag_drop": "Drag & drop your dataset",
         "supports": "Supports CSV, XLSX up to 50MB",
@@ -59,7 +69,17 @@ TRANSLATIONS = {
     "ar": {
         "app_title": "وكيل تحليل البيانات بالذكاء الاصطناعي",
         "badge": "تحليلات مدعومة بالذكاء الاصطناعي",
+        "hero_title": "هل بياناتك قابلة للاستخدام؟ ما المهم؟ وما التالي؟",
+        "hero_subtitle": "ارفع مجموعة البيانات لتوليد ملخص تنفيذي فوري وتحليل معمق.",
         "hero_desc": "ارفع مجموعة البيانات وسأقوم تلقائياً بتوليد الرؤى والملخصات المرئية والتوصيات القابلة للتطبيق.",
+        "ask_ai_title": "اسأل الذكاء الاصطناعي",
+        "suggested_label": "أسئلة مقترحة (من هذه البيانات):",
+        "chat_placeholder": "اسأل أي شيء عن بياناتك...",
+        "tab_overview": "نظرة عامة",
+        "tab_health": "صحة البيانات",
+        "tab_findings": "أبرز النتائج",
+        "tab_charts": "الرسوم البيانية",
+        "generate_cta": "إنشاء الملخص التنفيذي",
         "data_source": "مصدر البيانات",
         "drag_drop": "اسحب وأفلت مجموعة البيانات",
         "supports": "يدعم CSV و XLSX حتى 50 ميجابايت",
@@ -1033,14 +1053,14 @@ def apply_css():
         color: #161121 !important;
     }
 
-    /* Ask AI — message icons: Datara system style only (no red/warm/alert) */
+    /* Ask AI — message icons: Datara plum/lilac only (no red/warm/alert) */
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"],
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] > div,
     [data-testid="stChatMessage"] > div > div:first-child,
     [data-testid="stChatMessage"] > div > div:first-child > div {
-        background: #251c35 !important;
-        background-color: #251c35 !important;
-        border: 1px solid rgba(212, 171, 254, 0.12) !important;
+        background: #1e1829 !important;
+        background-color: #1e1829 !important;
+        border: 1px solid rgba(212, 171, 254, 0.1) !important;
         border-radius: var(--radius-sm) !important;
         color: #8b7a9e !important;
         box-shadow: none !important;
@@ -1053,7 +1073,7 @@ def apply_css():
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] svg,
     [data-testid="stChatMessage"] > div > div:first-child img,
     [data-testid="stChatMessage"] > div > div:first-child svg {
-        filter: brightness(1.1) saturate(0.6) hue-rotate(-10deg) !important;
+        filter: brightness(1.15) saturate(0.4) hue-rotate(260deg) !important;
     }
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] path,
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] circle,
@@ -1192,6 +1212,45 @@ def apply_css():
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
     }
 
+    /* Light theme — premium soft surfaces */
+    body.datara-theme-light {
+        --bg-base: #f5f3f8;
+        --bg-panel: #ffffff;
+        --bg-surface: #ebe8f2;
+        --text-primary: #1a1525;
+        --text-secondary: #4a4358;
+        --text-muted: #6e6580;
+        --border-dim: rgba(126, 90, 182, 0.15);
+        --border-medium: rgba(126, 90, 182, 0.25);
+        --border-bright: rgba(126, 90, 182, 0.35);
+        --deep-plum: #e5e0ef;
+    }
+    body.datara-theme-light [data-testid="stAppViewContainer"] {
+        background: #f5f3f8 !important;
+        background-image: radial-gradient(ellipse at 50% 30%, #e5e0ef 0%, #f5f3f8 70%) !important;
+    }
+    body.datara-theme-light .datara-ask-ai-response,
+    body.datara-theme-light [data-testid="stChatMessage"] {
+        background: #ffffff !important;
+        border-color: rgba(126, 90, 182, 0.2) !important;
+    }
+    body.datara-theme-light [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"],
+    body.datara-theme-light [data-testid="stChatMessage"] > div > div:first-child {
+        background: #ebe8f2 !important;
+        border-color: rgba(126, 90, 182, 0.2) !important;
+        color: #6e6580 !important;
+    }
+
+    /* RTL for Arabic */
+    body.datara-lang-ar [data-testid="stAppViewContainer"],
+    body.datara-lang-ar .block-container {
+        direction: rtl;
+        text-align: right;
+    }
+    body.datara-lang-ar .block-container [data-testid="column"] {
+        direction: rtl;
+    }
+
     </style>
     <script>
     document.body.addEventListener("click", function(e) {
@@ -1214,13 +1273,66 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# 1. Header + Hero (clean, no icon)
-st.title("Is your data usable? What matters? What's next?")
-st.caption("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
+# Theme + language: inject so body gets class for CSS
+_theme = st.session_state.get("theme", "dark")
+_lang = st.session_state.get("lang", "en")
+st.markdown(
+    f'<div id="datara-config" data-theme="{_theme}" data-lang="{_lang}"></div>'
+    r'<script>(function(){var c=document.getElementById("datara-config");if(!c)return;var t=c.getAttribute("data-theme"),l=c.getAttribute("data-lang");'
+    r'if(t==="light")document.body.classList.add("datara-theme-light");else document.body.classList.remove("datara-theme-light");'
+    r'if(l==="ar")document.body.classList.add("datara-lang-ar");else document.body.classList.remove("datara-lang-ar");})();</script>',
+    unsafe_allow_html=True,
+)
+
+# Header: brand | language switcher | theme toggle
+_h1, _h2, _h3 = st.columns([2, 1, 1])
+with _h1:
+    st.markdown('<span class="datara-header-brand">Datara</span>', unsafe_allow_html=True)
+with _h2:
+    _new_lang = st.radio(
+        "Language",
+        options=["en", "ar"],
+        format_func=lambda x: t("lang_ar") if x == "ar" else t("lang_en"),
+        key="header_lang",
+        horizontal=True,
+        index=1 if st.session_state.lang == "ar" else 0,
+        label_visibility="collapsed",
+    )
+    if _new_lang != st.session_state.lang:
+        st.session_state.lang = _new_lang
+        st.rerun()
+with _h3:
+    _new_theme = st.radio(
+        "Theme",
+        options=["dark", "light"],
+        format_func=lambda x: t("theme_light") if x == "light" else t("theme_dark"),
+        key="header_theme",
+        horizontal=True,
+        index=0 if st.session_state.theme == "dark" else 1,
+        label_visibility="collapsed",
+    )
+    if _new_theme != st.session_state.theme:
+        st.session_state.theme = _new_theme
+        st.rerun()
+
+# Header pill styling: segment control look
+st.markdown("""
+<style>
+.datara-header-brand { font-family: var(--font-sans); font-size: 18px; font-weight: 600; color: var(--text-primary); }
+[data-testid="stHorizontalBlock"] .stRadio > div { flex-direction: row !important; gap: 4px !important; }
+[data-testid="stHorizontalBlock"] .stRadio label { background: var(--bg-panel) !important; color: var(--text-muted) !important; border: 1px solid var(--border-dim) !important; border-radius: 999px !important; font-size: 12px !important; padding: 6px 14px !important; }
+[data-testid="stHorizontalBlock"] .stRadio label:hover { border-color: var(--accent-primary) !important; color: var(--text-primary) !important; }
+[data-testid="stHorizontalBlock"] .stRadio label[data-checked="true"], [data-testid="stHorizontalBlock"] .stRadio div[role="radiogroup"] label:first-of-type { border-color: var(--accent-primary) !important; color: var(--accent-primary) !important; }
+</style>
+""", unsafe_allow_html=True)
+
+# 1. Hero (translated)
+st.title(t("hero_title"))
+st.caption(t("hero_subtitle"))
 
 # 2. Upload zone
 uploaded_file = st.file_uploader(
-    "Upload CSV or XLSX — drag & drop or browse",
+    t("drag_drop") + " — " + t("browse_files"),
     type=["csv", "xlsx"],
     key="main_uploader",
 )
@@ -1229,7 +1341,7 @@ if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
         reset_app_state()
     st.markdown(
-        '<p class="datara-upload-prompt">Upload your dataset to generate an instant executive summary and deep-dive analysis.</p>',
+        f'<p class="datara-upload-prompt">{html.escape(t("hero_subtitle"))}</p>',
         unsafe_allow_html=True,
     )
     st.stop()
@@ -1264,12 +1376,12 @@ if st.session_state.suggested_questions is None:
         st.session_state.suggested_questions = ask_agent_suggested_questions(df, profile)
     st.rerun()
 
-# 3. KPI Strip
+# 3. KPI Strip (translated)
 k1, k2, k3, k4, k5 = st.columns(5)
 with k1:
-    st.metric("Total Rows", f"{n_rows:,}")
+    st.metric(t("total_rows"), f"{n_rows:,}")
 with k2:
-    st.metric("Total Columns", n_cols)
+    st.metric(t("total_columns"), n_cols)
 with k3:
     st.metric("Missing Values", profile["missing_total"])
 with k4:
@@ -1278,7 +1390,7 @@ with k5:
     st.metric("Readiness %", f"{profile['readiness_pct']}%")
 
 # Generate summary + readiness expander
-if st.button("Generate Executive Summary", key="cta_gen"):
+if st.button(t("generate_cta"), key="cta_gen"):
     with st.spinner("Analyzing..."):
         st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
     st.rerun()
@@ -1287,12 +1399,12 @@ if profile.get("readiness_factors"):
         for f in profile["readiness_factors"]:
             st.write("-", str(f) if f is not None else "—")
 
-# 4. Main Tabbed Workspace (Overview, Health, Findings, Charts only)
+# 4. Main Tabbed Workspace (translated labels)
 tab_overview, tab_health, tab_findings, tab_charts = st.tabs([
-    "Overview",
-    "Data Health",
-    "Top Findings",
-    "Charts",
+    t("tab_overview"),
+    t("tab_health"),
+    t("tab_findings"),
+    t("tab_charts"),
 ])
 
 with tab_overview:
@@ -1492,10 +1604,10 @@ with tab_charts:
 
 # 5. Ask AI section — rebuilt: full-width panel, no broken chat_message layout
 st.markdown('<hr class="datara-ask-ai-divider" />', unsafe_allow_html=True)
-st.subheader("Ask AI")
+st.subheader(t("ask_ai_title"))
 
 # Suggested questions label + chips (muted, stable, no icon/animation)
-st.markdown('<p class="datara-ask-ai-suggested-label">Suggested questions (from this dataset):</p>', unsafe_allow_html=True)
+st.markdown(f'<p class="datara-ask-ai-suggested-label">{html.escape(t("suggested_label"))}</p>', unsafe_allow_html=True)
 suggested_qs = st.session_state.suggested_questions or []
 if suggested_qs:
     cols = st.columns(3)
@@ -1518,13 +1630,13 @@ if st.session_state.pending_question:
 # Render history: user = chat_message (compact), assistant = full-width panel only
 for msg in st.session_state.chat_history:
     if msg["role"] == "user":
-        with st.chat_message("user"):
+        with st.chat_message("user", avatar="👤"):
             st.write(msg["content"])
     else:
         st.markdown(_datara_ask_ai_response_panel(msg["content"]), unsafe_allow_html=True)
 
 # New question from input
-user_question = st.chat_input("Ask anything about your data...")
+user_question = st.chat_input(t("chat_placeholder"))
 if user_question:
     st.session_state.chat_history.append({"role": "user", "content": user_question})
     with st.spinner("..."):
