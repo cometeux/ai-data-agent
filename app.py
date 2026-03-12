@@ -585,16 +585,14 @@ def render_chart_fig(df, chart, is_dark):
 
 
 # -----------------------------
-# Chat response HTML (scrollable body + copy button)
+# Ask AI response panel (full-width, scrollable body only — no chat_message wrapper)
 # -----------------------------
-def _datara_chat_response_html(content):
-    """Build HTML for assistant message: scrollable body + Copy button. Content must be plain text."""
+def _datara_ask_ai_response_panel(content):
+    """Full-width response panel: single column, normal reading layout, internal scroll. Plain text."""
     body_escaped = html.escape(content).replace("\n", "<br>")
-    copy_attr = html.escape(content).replace("\n", "&#10;").replace("\r", "")
     return (
-        f'<div class="datara-chat-response">'
-        f'<div class="datara-chat-body">{body_escaped}</div>'
-        f'<button type="button" class="datara-copy-btn" data-copy="{copy_attr}">Copy</button>'
+        f'<div class="datara-ask-ai-response">'
+        f'<div class="datara-ask-ai-response-body">{body_escaped}</div>'
         f'</div>'
     )
 
@@ -685,10 +683,6 @@ def apply_css():
     [data-testid="stFileUploader"] [data-testid="stProgress"],
     [data-testid="stFileUploader"] [data-testid="stProgress"] > div {
         background: var(--deep-plum) !important;
-    }
-    [data-testid="stChatInput"]:focus-within {
-        border-color: var(--accent-glow) !important;
-        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px var(--border-violet) !important;
     }
     /* Remove every remaining red/coral accent leak — Datara only */
     *:focus-visible { outline-color: var(--accent-primary) !important; }
@@ -942,70 +936,8 @@ def apply_css():
     }
     [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
 
-    /* Chat — Ask AI: correct container hierarchy (avatar compact, message body full width) */
-    [data-testid="stChatMessage"] {
-        background: var(--bg-panel) !important;
-        border: 1px solid var(--border-dim) !important;
-        border-radius: var(--radius-lg) !important;
-        color: var(--text-secondary) !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        margin-bottom: 16px !important;
-        padding: 22px 26px !important;
-        box-sizing: border-box !important;
-        overflow: visible !important;
-    }
-    /* Inner flex row: avatar (compact) | content (takes remaining width) */
-    [data-testid="stChatMessage"] > div {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: flex-start !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        gap: 16px !important;
-    }
-    /* Avatar/icon column: fixed narrow width, must not grow */
-    [data-testid="stChatMessage"] > div > div:first-child,
-    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
-        flex: 0 0 auto !important;
-        width: 40px !important;
-        min-width: 40px !important;
-        max-width: 40px !important;
-        background: var(--bg-surface) !important;
-        border-radius: var(--radius-sm) !important;
-        color: var(--text-muted) !important;
-    }
-    [data-testid="stChatMessage"] > div:first-child img,
-    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img {
-        filter: brightness(1.1) contrast(0.95) !important;
-    }
-    /* Assistant icon: soft lilac glow */
-    [data-testid="stChatMessage"][data-role="assistant"] > div > div:first-child,
-    [data-testid="stChatMessage"][data-role="assistant"] [data-testid="stChatMessageAvatar"] {
-        background: rgba(212, 171, 254, 0.18) !important;
-        border: 1px solid var(--border-medium) !important;
-    }
-    /* Content column: must take all remaining width (full-width message body) */
-    [data-testid="stChatMessage"] > div > div:last-child,
-    [data-testid="stChatMessage"] > div:last-child {
-        flex: 1 1 0% !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        width: 100% !important;
-        overflow: visible !important;
-        display: block !important;
-    }
-    [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
-        width: 100% !important;
-        max-width: none !important;
-        min-width: 0 !important;
-        display: block !important;
-    }
-
-    /* Universal AI assistant section — separator and heading */
-    .datara-ai-section {
+    /* Ask AI section — divider and heading (clean spacing) */
+    .datara-ask-ai-divider {
         margin: 32px 0 0 0 !important;
         padding: 0 !important;
         border: none !important;
@@ -1013,60 +945,92 @@ def apply_css():
     }
     .stApp h2 { font-family: var(--font-sans) !important; font-size: 18px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
 
-    /* Suggested question chips — wrap cleanly, no overflow */
+    /* Ask AI — suggested questions label (muted, no highlight) */
+    .datara-ask-ai-suggested-label {
+        font-size: 13px !important;
+        color: var(--text-muted) !important;
+        margin: 0 0 10px 0 !important;
+        font-weight: 400 !important;
+    }
+    /* Ask AI — suggested chips row: wrap, muted lilac, subtle border, no glow, no icon/animation */
     .block-container [data-testid="column"] { min-width: 0 !important; }
-    .block-container [data-testid="column"] .stButton > button {
+    .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button {
+        font-family: var(--font-sans) !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        background: rgba(100, 80, 120, 0.22) !important;
+        border: 1px solid rgba(212, 171, 254, 0.12) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 10px 14px !important;
+        box-shadow: none !important;
         white-space: normal !important;
         overflow-wrap: break-word !important;
         word-wrap: break-word !important;
         max-width: 100% !important;
         text-align: left !important;
     }
+    .block-container > *:has(.datara-ask-ai-suggested-label) + * .stButton > button:hover {
+        background: rgba(100, 80, 120, 0.32) !important;
+        border-color: rgba(212, 171, 254, 0.2) !important;
+    }
 
-    /* Suggested questions — muted, premium chips with lamp icon and subtle icon motion */
-    .block-container > *:has(.datara-suggested-caption) + * .stButton > button {
-        font-family: var(--font-sans) !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: var(--text-muted) !important;
-        background: rgba(100, 80, 120, 0.25) !important;
-        border: 1px solid rgba(212, 171, 254, 0.15) !important;
+    /* Ask AI — response panel (full width, column layout, normal paragraphs, internal scroll) */
+    .datara-ask-ai-response {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 16px !important;
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-dim) !important;
         border-radius: var(--radius-lg) !important;
-        padding: 12px 16px 12px 40px !important;
-        box-shadow: none !important;
-        transition: background 0.2s ease, border-color 0.2s ease !important;
-        min-height: 44px;
-        display: inline-flex !important;
-        align-items: center !important;
-        text-align: left !important;
-        position: relative !important;
+        overflow: hidden !important;
     }
-    .block-container > *:has(.datara-suggested-caption) + * .stButton > button:hover {
-        background: rgba(100, 80, 120, 0.35) !important;
-        border-color: rgba(212, 171, 254, 0.25) !important;
-        box-shadow: none !important;
-        transform: none !important;
+    .datara-ask-ai-response-body {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        font-size: 15px !important;
+        line-height: 1.6 !important;
+        color: var(--text-secondary) !important;
+        padding: 20px 24px !important;
+        box-sizing: border-box !important;
     }
-    /* Lamp / idea icon (left of text), subtle vertical float on icon only */
-    .block-container > *:has(.datara-suggested-caption) + * .stButton > button::before {
-        content: "";
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        margin-top: -8px;
-        width: 16px;
-        height: 16px;
-        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b7a9e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14'/%3E%3C/svg%3E") center / contain no-repeat;
-        animation: datara-chip-icon-float 4s ease-in-out infinite;
+    .datara-ask-ai-response-body br { margin: 0.4em 0 !important; }
+
+    /* Ask AI — chat input: full width, floating, Datara theme; send button = accent, NO red */
+    [data-testid="stChatInput"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-dim) !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2) !important;
+        border-radius: 999px !important;
+        padding: 12px 20px 12px 24px !important;
+        margin-top: 16px !important;
     }
-    @keyframes datara-chip-icon-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-2px); }
+    [data-testid="stChatInput"]:focus-within {
+        border-color: var(--border-medium) !important;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.2), 0 0 0 1px var(--border-medium) !important;
     }
-    .datara-suggested-caption {
-        font-size: 13px !important;
+    [data-testid="stChatInput"] textarea {
+        color: var(--text-primary) !important;
+        font-size: 15px !important;
+    }
+    [data-testid="stChatInput"] textarea::placeholder {
         color: var(--text-muted) !important;
-        margin-bottom: 10px !important;
+    }
+    [data-testid="stChatInput"] button,
+    [data-testid="stChatInput"] [data-testid="stChatInputSubmitButton"] {
+        background: var(--accent-primary) !important;
+        color: #161121 !important;
+        border: none !important;
+    }
+    [data-testid="stChatInput"] button:hover,
+    [data-testid="stChatInput"] [data-testid="stChatInputSubmitButton"]:hover {
+        background: var(--accent-secondary) !important;
+        color: #161121 !important;
     }
 
     /* Tab-inner buttons — pill secondary */
@@ -1133,21 +1097,6 @@ def apply_css():
         line-height: 1.55;
         color: var(--text-secondary);
     }
-    /* Markdown wrapper must be full-width block so message body is not squeezed */
-    [data-testid="stChatMessage"] [data-testid="stMarkdown"] {
-        display: block !important;
-        width: 100% !important;
-        max-width: none !important;
-        min-width: 0 !important;
-    }
-    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p {
-        max-width: none !important;
-        width: 100% !important;
-        line-height: 1.6 !important;
-    }
-    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p { margin-bottom: 0.75em !important; }
-    [data-testid="stChatMessage"] [data-testid="stMarkdown"] p:last-child { margin-bottom: 0 !important; }
-
     /* Findings — proper spacing rhythm, breathable and polished */
     .datara-finding-card {
         font-family: var(--font-sans);
@@ -1191,74 +1140,6 @@ def apply_css():
         margin-top: 8px;
     }
     .datara-finding-value br { margin: 0.5em 0; }
-
-    /* Chat response — full-width message body (correct hierarchy: compact row + body below) */
-    .datara-chat-response {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        margin-top: 0;
-        padding-right: 6px;
-        box-sizing: border-box;
-    }
-    .datara-chat-body {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        max-height: 50vh;
-        min-height: 2rem;
-        overflow-y: auto;
-        overflow-x: hidden;
-        font-size: 15px;
-        line-height: 1.6;
-        color: var(--text-secondary);
-        padding: 6px 12px 6px 0;
-        box-sizing: border-box;
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-    .datara-chat-body br { margin: 0.4em 0; }
-    .datara-copy-btn {
-        font-family: var(--font-sans);
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--text-muted);
-        background: rgba(255,255,255,0.06);
-        border: 1px solid var(--border-dim);
-        border-radius: 999px;
-        padding: 6px 14px;
-        margin-top: 12px;
-        cursor: pointer;
-        transition: color 0.2s, border-color 0.2s, background 0.2s;
-    }
-    .datara-copy-btn:hover {
-        color: var(--text-secondary);
-        border-color: var(--border-medium);
-        background: rgba(255,255,255,0.08);
-    }
-
-    /* Chat input — floating, airy, premium assistant bar */
-    [data-testid="stChatInput"] {
-        background: var(--bg-panel) !important;
-        border: 1px solid var(--border-violet) !important;
-        box-shadow: 0 4px 24px rgba(0,0,0,0.25), 0 0 0 1px var(--border-violet) !important;
-        border-radius: 999px !important;
-        padding: 12px 20px 12px 24px !important;
-        margin-top: 16px !important;
-    }
-    [data-testid="stChatInput"]:focus-within {
-        border-color: var(--accent-glow) !important;
-        box-shadow: 0 4px 28px rgba(0,0,0,0.3), 0 0 0 1px var(--border-medium) !important;
-    }
-    [data-testid="stChatInput"] textarea {
-        color: var(--text-primary) !important;
-        font-size: 15px !important;
-    }
-    [data-testid="stChatInput"] textarea::placeholder {
-        color: var(--text-muted) !important;
-    }
 
     /* Tab content — consistent vertical rhythm */
     [data-testid="stTabs"] [data-testid="stVerticalBlock"] {
@@ -1579,10 +1460,12 @@ with tab_charts:
                     else:
                         st.caption("Click *Explain this chart* for a short explanation.")
 
-# 5. Universal AI Assistant — always visible below tabs (core workspace feature)
-st.markdown('<hr class="datara-ai-section" />', unsafe_allow_html=True)
+# 5. Ask AI section — rebuilt: full-width panel, no broken chat_message layout
+st.markdown('<hr class="datara-ask-ai-divider" />', unsafe_allow_html=True)
 st.subheader("Ask AI")
-st.markdown('<p class="datara-suggested-caption">Suggested questions (from this dataset):</p>', unsafe_allow_html=True)
+
+# Suggested questions label + chips (muted, stable, no icon/animation)
+st.markdown('<p class="datara-ask-ai-suggested-label">Suggested questions (from this dataset):</p>', unsafe_allow_html=True)
 suggested_qs = st.session_state.suggested_questions or []
 if suggested_qs:
     cols = st.columns(3)
@@ -1591,6 +1474,8 @@ if suggested_qs:
             if st.button(q[:60] + ("…" if len(q) > 60 else ""), key=f"sug_{i}"):
                 st.session_state.pending_question = q
                 st.rerun()
+
+# Handle suggested-question click: run agent and append to history
 if st.session_state.pending_question:
     q = st.session_state.pending_question
     st.session_state.pending_question = None
@@ -1599,17 +1484,20 @@ if st.session_state.pending_question:
         answer = ask_agent_question(df, result or {}, q, profile)
     st.session_state.chat_history.append({"role": "assistant", "content": answer})
     st.rerun()
-for idx, msg in enumerate(st.session_state.chat_history):
-    with st.chat_message(msg["role"]):
-        if msg["role"] == "assistant":
-            st.markdown(_datara_chat_response_html(msg["content"]), unsafe_allow_html=True)
-        else:
+
+# Render history: user = chat_message (compact), assistant = full-width panel only
+for msg in st.session_state.chat_history:
+    if msg["role"] == "user":
+        with st.chat_message("user"):
             st.write(msg["content"])
+    else:
+        st.markdown(_datara_ask_ai_response_panel(msg["content"]), unsafe_allow_html=True)
+
+# New question from input
 user_question = st.chat_input("Ask anything about your data...")
 if user_question:
     st.session_state.chat_history.append({"role": "user", "content": user_question})
-    with st.chat_message("assistant"):
+    with st.spinner("..."):
         answer = ask_agent_question(df, result or {}, user_question, profile)
-        st.markdown(_datara_chat_response_html(answer), unsafe_allow_html=True)
     st.session_state.chat_history.append({"role": "assistant", "content": answer})
     st.rerun()
