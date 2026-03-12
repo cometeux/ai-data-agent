@@ -319,7 +319,7 @@ Return this exact JSON structure (no markdown, no extra text):
     {{ "title": "Chart title", "chart_type": "line or bar or pie", "x_column": "...", "y_column": "...", "aggregation": "mean or sum or count", "explanation": "Brief explanation." }}
   ]
 }}
-RULES: Use ONLY column names from COLUMNS. chart_type: bar, line, pie, scatter. For bar/line/pie use a grouping column for x_column and measure column for y_column. aggregation: sum, mean, count. Return at least 2 charts. Include an "explanation" for each chart."""
+RULES: Use ONLY column names from COLUMNS. chart_type: bar, line, pie, scatter. For bar/line/pie use a grouping column for x_column and measure column for y_column. aggregation: sum, mean, count. Return exactly 2 charts (no more). Include an "explanation" for each chart."""
     try:
         response = client.responses.create(model="gpt-4.1-mini", input=prompt)
         raw = (response.output_text or "").strip()
@@ -337,7 +337,7 @@ RULES: Use ONLY column names from COLUMNS. chart_type: bar, line, pie, scatter. 
                 if "explanation" not in ch:
                     ch["explanation"] = "Chart of selected metrics."
                 valid_charts.append(ch)
-        result["charts"] = valid_charts[:6] if valid_charts else []
+        result["charts"] = valid_charts[:2] if valid_charts else []
         return result
     except Exception as e:
         return {"summary": {**_default_analysis_result()["summary"], "overview": f"Analysis failed: {str(e)[:120]}."}, "charts": []}
@@ -524,153 +524,15 @@ def render_chart_fig(df, chart, is_dark):
 
 
 # -----------------------------
-# Premium UI (compact, glass-like, indigo accents — Streamlit-safe CSS only)
+# Minimal stable UI (no fragile CSS)
 # -----------------------------
-def apply_minimal_css():
+def apply_css():
     st.markdown("""
     <style>
-    /* Hide chrome */
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
-
-    /* Compact container */
-    .block-container {
-        max-width: 980px;
-        padding: 0.75rem 1.25rem 1.25rem;
-    }
-
-    /* Subtle dark gradient + soft indigo glow */
-    [data-testid="stAppViewContainer"] {
-        background: linear-gradient(165deg, #0f0f14 0%, #12121a 40%, #15152a 100%) !important;
-    }
-    [data-testid="stAppViewContainer"]::before {
-        content: "";
-        position: fixed;
-        top: -20%;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80%;
-        height: 50%;
-        background: radial-gradient(ellipse, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-        pointer-events: none;
-        z-index: 0;
-    }
-    .block-container { position: relative; z-index: 1; }
-
-    /* Tighter typography and spacing */
-    h1 { font-size: 1.5rem !important; margin-bottom: 0.1rem !important; }
-    [data-testid="stMarkdown"] p { margin-bottom: 0.2rem !important; }
-    [data-testid="stVerticalBlock"] > div { gap: 0.35rem !important; }
-
-    /* Glass-like KPI cards */
-    [data-testid="stMetric"] {
-        background: rgba(30, 27, 75, 0.4);
-        padding: 0.6rem 0.85rem;
-        border-radius: 10px;
-        border: 1px solid rgba(139, 92, 246, 0.15);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
-    [data-testid="stMetric"] label {
-        color: #a5b4fc !important;
-        font-size: 0.7rem !important;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.03em;
-    }
-    [data-testid="stMetric"] [data-testid="stMetricValue"] {
-        color: #e0e7ff !important;
-        font-size: 1.15rem !important;
-        font-weight: 600;
-    }
-
-    /* Primary button: indigo/violet */
-    .stButton > button {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
-        color: #fff !important;
-        border: none !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
-        box-shadow: 0 2px 10px rgba(79, 70, 229, 0.35);
-    }
-    .stButton > button:hover {
-        box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
-        filter: brightness(1.05);
-    }
-
-    /* Tabs: modern, active accent */
-    [data-testid="stTabs"] {
-        margin-top: 0.5rem;
-    }
-    [data-testid="stTabs"] [role="tab"] {
-        padding: 0.45rem 0.9rem !important;
-        border-radius: 8px;
-    }
-    [data-testid="stTabs"] [aria-selected="true"] {
-        background: rgba(99, 102, 241, 0.2) !important;
-        color: #c7d2fe !important;
-    }
-
-    /* Upload area: contained feel */
-    [data-testid="stFileUploader"] {
-        border-radius: 10px;
-        padding: 0.5rem;
-        background: rgba(30, 27, 75, 0.25);
-        border: 1px solid rgba(139, 92, 246, 0.12);
-    }
-    [data-testid="stFileUploader"] section {
-        border-radius: 8px;
-        border-color: rgba(139, 92, 246, 0.2) !important;
-    }
-
-    /* Expander: softer */
-    .streamlit-expanderHeader {
-        background: rgba(30, 27, 75, 0.2);
-        border-radius: 8px;
-        border: 1px solid rgba(139, 92, 246, 0.1);
-    }
-
-    /* Chat / AI section refinement */
-    [data-testid="stChatInput"] {
-        border-radius: 10px;
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        background: rgba(30, 27, 75, 0.3) !important;
-    }
-    [data-testid="stChatMessage"] {
-        background: rgba(30, 27, 75, 0.2) !important;
-        border-radius: 10px;
-        border: 1px solid rgba(139, 92, 246, 0.08);
-        padding: 0.6rem 0.9rem !important;
-    }
-
-    /* Subheaders: compact, accent */
-    h2, h3 { font-size: 0.95rem !important; margin-top: 0.4rem !important; margin-bottom: 0.3rem !important; color: #a5b4fc !important; }
-    .stCaption { color: #94a3b8 !important; }
-
-    /* Info/success boxes: subtle glass */
-    [data-testid="stAlert"] {
-        border-radius: 8px;
-        border: 1px solid rgba(139, 92, 246, 0.15);
-    }
-
-    /* Dividers lighter */
-    hr { border-color: rgba(139, 92, 246, 0.12) !important; margin: 0.4rem 0 !important; }
-
-    /* Suggested questions: compact chip-style (Ask AI tab) */
-    [role="tabpanel"]:nth-of-type(5) [data-testid="column"] .stButton > button {
-        font-size: 0.8rem !important;
-        padding: 0.35rem 0.65rem !important;
-        border-radius: 999px !important;
-        background: rgba(51, 65, 85, 0.5) !important;
-        border: 1px solid rgba(148, 163, 184, 0.25) !important;
-        color: #c7d2fe !important;
-        font-weight: 500 !important;
-    }
-    [role="tabpanel"]:nth-of-type(5) [data-testid="column"] .stButton > button:hover {
-        background: rgba(99, 102, 241, 0.25) !important;
-        border-color: rgba(139, 92, 246, 0.3) !important;
-    }
+    .block-container { max-width: 900px; padding: 1rem 1.25rem 1.5rem; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -678,28 +540,25 @@ def apply_minimal_css():
 # -----------------------------
 # Render
 # -----------------------------
-apply_minimal_css()
+apply_css()
 
-# 1. Header (compact: title + badge)
-col_title, col_badge = st.columns([3, 1])
-with col_title:
-    st.title(t("app_title"))
-with col_badge:
-    st.caption(t("badge"))
-st.divider()
+# 1. Header
+st.title("AI Data Review Workspace")
+st.caption("Quick answers: Is this dataset usable? What's wrong? What matters? What should I investigate next?")
 
-# 2. Upload block
-st.subheader(t("data_source"))
-uploaded_file = st.file_uploader(
-    t("drag_drop") + " — " + t("supports"),
-    type=["csv", "xlsx"],
-    key="main_uploader",
-)
+# 2. Upload Card
+with st.container():
+    st.subheader("Upload")
+    uploaded_file = st.file_uploader(
+        "Upload a CSV or Excel file",
+        type=["csv", "xlsx"],
+        key="main_uploader",
+    )
 
 if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
         reset_app_state()
-    st.info(t("hero_desc"))
+    st.info("Upload a dataset to get a readiness score, data health checks, top findings, and AI Q&A.")
     st.stop()
 
 if st.session_state.last_uploaded_name != uploaded_file.name:
@@ -720,55 +579,74 @@ size_mb = file_size_mb(uploaded_file)
 n_rows, n_cols = df.shape
 result = st.session_state.analysis_result
 
+# File row + metadata
+st.write("**File:**", uploaded_file.name, "·", f"{size_mb:.2f} MB", "·", infer_data_types(df))
+if profile.get("readiness_summary"):
+    st.caption(profile["readiness_summary"])
+
 # Generate file-aware suggested questions once per file (when None)
 if st.session_state.suggested_questions is None:
     with st.spinner("Preparing suggested questions..."):
         st.session_state.suggested_questions = ask_agent_suggested_questions(df, profile)
     st.rerun()
 
-# 3. KPI row
-st.subheader(t("dataset_overview"))
+# 3. KPI Strip
 k1, k2, k3, k4, k5 = st.columns(5)
 with k1:
-    st.metric(t("total_rows"), f"{n_rows:,}")
+    st.metric("Rows", f"{n_rows:,}")
 with k2:
-    st.metric(t("total_columns"), n_cols)
+    st.metric("Columns", n_cols)
 with k3:
-    st.metric(t("duplicates"), profile["duplicate_rows"])
+    st.metric("Missing", profile["missing_total"])
 with k4:
-    st.metric(t("missing_vals"), profile["missing_total"])
+    st.metric("Duplicates", profile["duplicate_rows"])
 with k5:
     st.metric("Readiness", f"{profile['readiness_pct']}%")
-st.caption(f"{uploaded_file.name} · {size_mb:.2f} MB · {t('data_type')}: {infer_data_types(df)}" + (f" · {profile.get('readiness_summary', '')}" if profile.get("readiness_summary") else ""))
 
-# Generate summary + readiness expander (one row)
-row_btn, row_exp = st.columns([1, 2])
-with row_btn:
-    if st.button(t("generate_summary_short"), key="cta_gen"):
-        with st.spinner(t("analyzing")):
-            st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
-        st.rerun()
-with row_exp:
-    if profile.get("readiness_factors"):
-        with st.expander("What affects the readiness score"):
-            for f in profile["readiness_factors"]:
-                st.write("-", f)
+# Generate summary + readiness expander
+if st.button("Generate summary", key="cta_gen"):
+    with st.spinner("Analyzing..."):
+        st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
+    st.rerun()
+if profile.get("readiness_factors"):
+    with st.expander("What affects the readiness score"):
+        for f in profile["readiness_factors"]:
+            st.write("-", f)
 
-# 4. Main tabbed workspace
-tab_overview, tab_health, tab_insights, tab_charts, tab_ai = st.tabs([
+# 4. Main Tabbed Workspace
+tab_overview, tab_health, tab_findings, tab_charts, tab_ai = st.tabs([
     "Overview",
     "Data Health",
-    "Insights",
+    "Top Findings",
     "Charts",
     "Ask AI",
 ])
 
 with tab_overview:
-    st.write("**File:**", uploaded_file.name, "·", f"{size_mb:.2f} MB")
+    # Short dataset summary
     if result and result.get("summary", {}).get("overview"):
-        st.write("**Overview:**", result["summary"]["overview"])
-    st.caption(t("data_preview"))
-    st.dataframe(df.head(100), height=320, use_container_width=True)
+        st.write(result["summary"]["overview"])
+    else:
+        st.write(f"Dataset has **{n_rows:,}** rows and **{n_cols}** columns. Generate summary for an AI overview.")
+    # Detected column types
+    ctypes = profile.get("column_types") or {}
+    if ctypes:
+        num = [c for c, typ in ctypes.items() if typ == "numeric"]
+        cat = [c for c, typ in ctypes.items() if typ == "categorical"]
+        dt = [c for c, typ in ctypes.items() if typ == "datetime"]
+        if num:
+            st.caption("**Numeric (measures):** " + ", ".join(num[:15]) + (" …" if len(num) > 15 else ""))
+        if cat:
+            st.caption("**Categorical (groups):** " + ", ".join(cat[:15]) + (" …" if len(cat) > 15 else ""))
+        if dt:
+            st.caption("**Datetime:** " + ", ".join(dt))
+    # Recommended measures / groups
+    meas = profile.get("recommended_measure_columns") or []
+    grp = profile.get("recommended_grouping_columns") or []
+    if meas or grp:
+        st.caption("**Recommended measures:** " + (", ".join(meas[:10]) if meas else "—") + " · **Recommended groups:** " + (", ".join(grp[:10]) if grp else "—"))
+    st.caption("Data preview")
+    st.dataframe(df.head(200), height=280, use_container_width=True)
     c1, c2 = st.columns(2)
     with c1:
         st.download_button("Export CSV", df.to_csv(index=False).encode("utf-8"), file_name=uploaded_file.name or "data.csv", mime="text/csv", key="dl_csv")
@@ -792,12 +670,6 @@ with tab_overview:
             "## Biggest Opportunity",
             rep.get("biggest_opportunity") or "—",
             "",
-            "## Notable Trend",
-            rep.get("notable_trend") or "—",
-            "",
-            "## Data Quality Note",
-            rep.get("data_quality_concern") or "—",
-            "",
             "## Recommended Next Step",
             rep.get("recommended_next_step") or "—",
             "",
@@ -814,126 +686,84 @@ with tab_overview:
         st.download_button("Executive report", rep_text.encode("utf-8"), file_name="executive_report.md", mime="text/markdown", key="dl_report")
 
 with tab_health:
-    st.write("**Data Readiness Score:**", f"{profile['readiness_pct']}/100 —", profile.get("readiness_summary", ""))
-    st.divider()
-    h1, h2, h3 = st.columns(3)
-    with h1:
-        st.metric("Missing cells", profile["missing_total"])
-        pct = (100 * profile["missing_total"] / (profile["total_rows"] * len(profile["column_types"]))) if profile.get("column_types") else 0
-        st.caption(f"({pct:.1f}% of all cells)")
-    with h2:
-        st.metric("Duplicate rows", profile["duplicate_rows"])
-    with h3:
-        st.metric("Readiness", f"{profile['readiness_pct']}%")
+    # Missing values summary
+    total_cells = (profile.get("total_rows") or 0) * max(len(profile.get("column_types") or {}), 1)
+    missing_pct = (100 * profile["missing_total"] / total_cells) if total_cells else 0
+    st.write("**Missing values:**", profile["missing_total"], f"cells ({missing_pct:.1f}% of all cells)")
+    # Duplicate rows
+    st.write("**Duplicate rows:**", profile["duplicate_rows"])
+    # Bad columns (high null)
     if profile.get("high_null_columns"):
-        st.subheader("Columns with highest null %")
+        st.write("**Columns with highest null %:**")
         for col, pct in profile["high_null_columns"][:10]:
-            st.write(f"- **{col}**: {pct}% null")
-    st.subheader("Quality recommendations")
-    for rec in profile.get("quality_recommendations", []):
-        st.write("-", rec)
-    st.subheader("Column types (smart profiling)")
-    num = [c for c, t in profile.get("column_types", {}).items() if t == "numeric"]
-    cat = [c for c, t in profile.get("column_types", {}).items() if t == "categorical"]
-    dt = [c for c, t in profile.get("column_types", {}).items() if t == "datetime"]
-    if num:
-        st.caption("Numeric (recommended for measures): " + ", ".join(num[:12]) + (" ..." if len(num) > 12 else ""))
-    if cat:
-        st.caption("Categorical (recommended for grouping): " + ", ".join(cat[:12]) + (" ..." if len(cat) > 12 else ""))
-    if dt:
-        st.caption("Datetime: " + ", ".join(dt))
-    if profile.get("id_like_columns"):
-        st.caption("ID-like columns: " + ", ".join(profile["id_like_columns"][:10]))
+            st.write(f"- {col}: {pct}% null")
+    # Mixed types / text-heavy (quality warnings)
     if profile.get("text_heavy_columns"):
-        st.caption("Text-heavy columns: " + ", ".join(profile["text_heavy_columns"][:5]))
+        st.write("**Text-heavy columns:**", ", ".join(profile["text_heavy_columns"][:8]))
+    if profile.get("id_like_columns"):
+        st.caption("ID-like: " + ", ".join(profile["id_like_columns"][:8]))
+    # Cleanup recommendations
+    recs = profile.get("quality_recommendations") or []
+    if recs:
+        st.write("**Cleanup recommendations:**")
+        for rec in recs:
+            st.write("-", rec)
+    if not recs and profile["missing_total"] == 0 and profile["duplicate_rows"] == 0:
+        st.caption("No major data health issues detected.")
 
-with tab_insights:
+with tab_findings:
     if result is None:
-        st.info("Generate summary above to see insights.")
+        st.info("Generate summary above to see findings.")
     else:
         summary = result.get("summary") or {}
-        st.write("**" + t("overview") + "**")
-        st.write(summary.get("overview") or "—")
-        # Insight cards
         cards = [
             ("Top Finding", summary.get("top_finding")),
             ("Biggest Risk", summary.get("biggest_risk")),
             ("Biggest Opportunity", summary.get("biggest_opportunity")),
-            ("Notable Trend", summary.get("notable_trend")),
-            ("Data Quality Concern", summary.get("data_quality_concern")),
             ("Recommended Next Step", summary.get("recommended_next_step")),
         ]
         for label, value in cards:
             if value:
-                with st.container():
-                    st.write(f"**{label}**")
-                    st.info(value) if label in ("Biggest Risk", "Data Quality Concern") else st.success(value) if label in ("Biggest Opportunity", "Recommended Next Step") else st.write(value)
-        st.write("**" + t("key_insights") + "**")
-        for item in summary.get("key_insights") or []:
-            st.write("-", item)
-        st.write("**" + t("recommendations") + "**")
-        for item in summary.get("recommendations") or []:
-            st.write("-", item)
-        st.write("**" + t("final_summary") + "**")
-        st.write(summary.get("final_summary") or "—")
+                st.write(f"**{label}**")
+                st.info(value) if label == "Biggest Risk" else st.success(value) if label in ("Biggest Opportunity", "Recommended Next Step") else st.write(value)
+            else:
+                st.write(f"**{label}**")
+                st.caption("—")
 
 with tab_charts:
-    # Simple chart builder
-    st.subheader("Build your own chart")
-    measure_cols = profile.get("recommended_measure_columns") or [c for c, t in profile.get("column_types", {}).items() if t == "numeric"]
-    group_cols = profile.get("recommended_grouping_columns") or [c for c, t in profile.get("column_types", {}).items() if t == "categorical"]
-    if not group_cols:
-        group_cols = list(df.columns)[:10]
-    if not measure_cols:
-        measure_cols = list(df.columns)[:10]
-    cb1, cb2, cb3, cb4 = st.columns(4)
-    with cb1:
-        chart_type_build = st.selectbox("Chart type", ["bar", "line", "pie", "scatter"], key="cb_type")
-    with cb2:
-        x_build = st.selectbox("X (category)", group_cols, key="cb_x")
-    with cb3:
-        y_build = st.selectbox("Y (measure)", ["count"] + measure_cols, key="cb_y")
-    with cb4:
-        agg_build = st.selectbox("Aggregation", ["sum", "mean", "count"], key="cb_agg")
-    use_count = y_build == "count"
-    build_spec = {"chart_type": chart_type_build, "x_column": x_build, "y_column": x_build if use_count else y_build, "aggregation": "count" if use_count else agg_build, "title": f"Count by {x_build}" if use_count else f"{y_build} by {x_build}"}
-    fig_build = render_chart_fig(df, build_spec, st.session_state.theme == "dark")
-    if fig_build is not None:
-        st.plotly_chart(fig_build, use_container_width=True, key="chart_builder")
-    st.divider()
-    st.subheader("AI-generated charts")
     if result is None:
-        st.info("Generate summary above to see AI-recommended charts.")
+        st.info("Generate summary above to see charts.")
     else:
-        charts = result.get("charts") or []
+        charts = (result.get("charts") or [])[:2]
         if not charts:
-            st.caption(t("chart_not_available"))
+            st.caption("No charts generated. Try generating a summary.")
         for i, ch in enumerate(charts):
-            st.write("**" + (ch.get("title") or "Chart") + "**")
-            fig = render_chart_fig(df, ch, st.session_state.theme == "dark")
-            if fig is not None:
-                st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
-            else:
-                st.caption(t("chart_not_available"))
-            expl = ch.get("explanation") or st.session_state.chart_explanations.get(i)
-            if expl:
-                st.caption("**Explain this chart:** " + expl)
-            elif st.button("Explain this chart", key=f"explain_{i}"):
-                with st.spinner("..."):
-                    st.session_state.chart_explanations[i] = ask_agent_chart_explanation(ch, df)
-                st.rerun()
+            with st.container():
+                st.write("**" + (ch.get("title") or "Chart") + "**")
+                fig = render_chart_fig(df, ch, st.session_state.theme == "dark")
+                if fig is not None:
+                    st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
+                else:
+                    st.caption("Chart could not be rendered.")
+                expl = ch.get("explanation") or st.session_state.chart_explanations.get(i)
+                if expl:
+                    st.caption(expl)
+                else:
+                    if st.button("Explain this chart", key=f"explain_{i}"):
+                        with st.spinner("..."):
+                            st.session_state.chart_explanations[i] = ask_agent_chart_explanation(ch, df)
+                        st.rerun()
+                    else:
+                        st.caption("Click *Explain this chart* for a short explanation.")
 
 with tab_ai:
-    st.caption(t("ask_questions"))
     suggested_qs = st.session_state.suggested_questions or []
-    st.caption("Suggested questions (click to ask):")
-    # Compact chip-style grid (3 columns)
-    n = len(suggested_qs)
-    if n > 0:
+    st.caption("Suggested questions (from this dataset):")
+    if suggested_qs:
         cols = st.columns(3)
         for i, q in enumerate(suggested_qs):
             with cols[i % 3]:
-                if st.button(q, key=f"sug_{i}"):
+                if st.button(q[:60] + ("…" if len(q) > 60 else ""), key=f"sug_{i}"):
                     st.session_state.pending_question = q
                     st.rerun()
     if st.session_state.pending_question:
@@ -947,7 +777,7 @@ with tab_ai:
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-    user_question = st.chat_input(t("ask_ai_placeholder"))
+    user_question = st.chat_input("Ask about this dataset")
     if user_question:
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         with st.chat_message("assistant"):
