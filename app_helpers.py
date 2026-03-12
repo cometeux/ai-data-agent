@@ -120,6 +120,9 @@ def prepare_chart_data(df, x_column, y_column, aggregation):
     return data, y_column
 
 
+DATARA_CHART_COLORS = ["#D4ABFE", "#a78bfa", "#8b5cf6", "#c084fc", "#7c3aed", "#6d28d9"]
+
+
 def render_chart_fig(df, chart, is_dark):
     chart_type = chart.get("chart_type", "bar")
     x_column = chart.get("x_column")
@@ -132,39 +135,45 @@ def render_chart_fig(df, chart, is_dark):
     if aggregation != "count" and (not y_column or y_column not in df.columns):
         return None
     data, final_y = prepare_chart_data(df, x_column, y_column, aggregation)
+    template = "plotly_dark" if is_dark else "plotly_white"
     if chart_type == "bar":
-        fig = px.bar(data, x=x_column, y=final_y, title=None, template="plotly_white")
+        fig = px.bar(data, x=x_column, y=final_y, title=None, template=template, color_discrete_sequence=DATARA_CHART_COLORS)
     elif chart_type == "line":
-        fig = px.line(data, x=x_column, y=final_y, title=None, template="plotly_white")
+        fig = px.line(data, x=x_column, y=final_y, title=None, template=template, color_discrete_sequence=DATARA_CHART_COLORS)
     elif chart_type == "pie":
-        fig = px.pie(data, names=x_column, values=final_y, title=None)
+        fig = px.pie(data, names=x_column, values=final_y, title=None, color_discrete_sequence=DATARA_CHART_COLORS)
     elif chart_type == "scatter":
-        fig = px.scatter(data, x=x_column, y=final_y, title=None, template="plotly_white")
+        fig = px.scatter(data, x=x_column, y=final_y, title=None, template=template, color_discrete_sequence=DATARA_CHART_COLORS)
     else:
         return None
     if is_dark:
         fig.update_layout(
             paper_bgcolor="#161121",
             plot_bgcolor="#221b32",
-            font=dict(family="Inter, sans-serif", color="#F5F0FF", size=12),
+            font=dict(family="Inter, sans-serif", color="#ffffff", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(
-                gridcolor="rgba(245, 240, 255, 0.06)",
-                zerolinecolor="rgba(245, 240, 255, 0.08)",
-                tickfont=dict(color="#c4b5e0", size=11),
-                title_font=dict(color="#c4b5e0", size=12),
+                gridcolor="rgba(255, 255, 255, 0.06)",
+                zerolinecolor="rgba(255, 255, 255, 0.08)",
+                tickfont=dict(color="#9B92AB", size=11),
+                title_font=dict(color="#9B92AB", size=12),
             ),
             yaxis=dict(
-                gridcolor="rgba(245, 240, 255, 0.06)",
-                zerolinecolor="rgba(245, 240, 255, 0.08)",
-                tickfont=dict(color="#c4b5e0", size=11),
-                title_font=dict(color="#c4b5e0", size=12),
+                gridcolor="rgba(255, 255, 255, 0.06)",
+                zerolinecolor="rgba(255, 255, 255, 0.08)",
+                tickfont=dict(color="#9B92AB", size=11),
+                title_font=dict(color="#9B92AB", size=12),
             ),
-            colorway=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"],
-            legend=dict(bgcolor="rgba(18, 14, 29, 0.6)", font=dict(color="#c4b5e0", size=11), bordercolor="rgba(245, 240, 255, 0.1)"),
+            colorway=DATARA_CHART_COLORS,
+            legend=dict(bgcolor="rgba(22, 17, 33, 0.9)", font=dict(color="#9B92AB", size=11), bordercolor="rgba(255,255,255,0.08)"),
+            hoverlabel=dict(bgcolor="#221b32", font=dict(color="#ffffff", size=12), bordercolor="rgba(212, 171, 254, 0.3)"),
+            modebar=dict(bgcolor="rgba(22, 17, 33, 0.8)", color="#9B92AB", activecolor="#D4ABFE"),
         )
         if chart_type == "pie":
-            fig.update_traces(marker=dict(colors=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"]))
+            fig.update_traces(marker=dict(colors=DATARA_CHART_COLORS))
+        else:
+            fig.update_traces(marker=dict(color=DATARA_CHART_COLORS[0]), selector=dict(type="bar"))
+            fig.update_traces(line=dict(color=DATARA_CHART_COLORS[0]), selector=dict(type="scatter", mode="lines"))
     else:
         fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0.6)",
@@ -172,6 +181,7 @@ def render_chart_fig(df, chart, is_dark):
             font=dict(color="#0f172a", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)"),
-            yaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)")
+            yaxis=dict(gridcolor="rgba(15,23,42,0.08)", zerolinecolor="rgba(15,23,42,0.1)"),
+            colorway=DATARA_CHART_COLORS,
         )
     return fig
