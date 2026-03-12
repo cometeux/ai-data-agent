@@ -504,13 +504,27 @@ def render_chart_fig(df, chart, is_dark):
         return None
     if is_dark:
         fig.update_layout(
-            paper_bgcolor="rgba(18,18,22,0.35)",
-            plot_bgcolor="rgba(18,18,22,0.15)",
-            font=dict(color="#F3F4F6", size=12),
+            paper_bgcolor="#120e1d",
+            plot_bgcolor="#1c162b",
+            font=dict(family="Inter, sans-serif", color="#F5F0FF", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
-            xaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)"),
-            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)")
+            xaxis=dict(
+                gridcolor="rgba(245, 240, 255, 0.06)",
+                zerolinecolor="rgba(245, 240, 255, 0.08)",
+                tickfont=dict(color="#c4b5e0", size=11),
+                title_font=dict(color="#c4b5e0", size=12),
+            ),
+            yaxis=dict(
+                gridcolor="rgba(245, 240, 255, 0.06)",
+                zerolinecolor="rgba(245, 240, 255, 0.08)",
+                tickfont=dict(color="#c4b5e0", size=11),
+                title_font=dict(color="#c4b5e0", size=12),
+            ),
+            colorway=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"],
+            legend=dict(bgcolor="rgba(18, 14, 29, 0.6)", font=dict(color="#c4b5e0", size=11), bordercolor="rgba(245, 240, 255, 0.1)"),
         )
+        if chart_type == "pie":
+            fig.update_traces(marker=dict(colors=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"]))
     else:
         fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0.6)",
@@ -642,50 +656,118 @@ def apply_css():
         box-shadow: 0 8px 25px rgba(167, 139, 250, 0.4) !important;
     }
 
-    /* Expander — design: summary 14px muted, content padding */
+    /* Expander — Datara: same panel language, subtle border */
     .stExpander {
         background: transparent !important;
         border: none !important;
+        margin: 8px 0 !important;
     }
     .streamlit-expanderHeader {
         background: transparent !important;
-        font-size: 14px !important; color: var(--text-muted) !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
         padding: 12px 0 !important;
+        font-family: var(--font-sans) !important;
     }
     .streamlit-expanderContent {
         border-top: 1px solid var(--border-dim) !important;
-        color: var(--text-muted) !important; font-size: 14px !important;
+        color: var(--text-secondary) !important;
+        font-size: 14px !important;
+        padding: 12px 0 4px 0 !important;
+        font-family: var(--font-sans) !important;
     }
 
-    /* Tabs — design: underline list, active = accent underline */
-    [data-testid="stTabs"] { margin-top: 16px; }
+    /* Tabs — Datara: minimal underline, muted inactive, bright active, premium rhythm */
+    [data-testid="stTabs"] { margin-top: 24px; }
     [data-testid="stTabs"] [role="tablist"] {
         border-bottom: 1px solid var(--border-dim) !important;
-        gap: 32px !important;
+        gap: 28px !important;
+        padding-bottom: 0 !important;
+        min-height: 44px !important;
+        align-items: flex-end !important;
     }
     [data-testid="stTabs"] [role="tab"] {
         font-family: var(--font-sans) !important;
-        padding: 12px 0 !important;
+        padding: 10px 0 14px 0 !important;
         color: var(--text-muted) !important;
-        font-size: 15px !important; font-weight: 500 !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.01em !important;
         background: none !important;
         border: none !important;
         border-radius: 0 !important;
         border-bottom: 2px solid transparent !important;
         margin-bottom: -1px !important;
+        transition: color 0.2s ease, border-color 0.2s ease !important;
+    }
+    [data-testid="stTabs"] [role="tab"]:hover {
+        color: var(--text-secondary) !important;
     }
     [data-testid="stTabs"] [aria-selected="true"] {
         color: var(--text-primary) !important;
         border-bottom-color: var(--accent-primary) !important;
-        box-shadow: 0 0 10px var(--accent-glow);
+        box-shadow: none !important;
     }
 
-    /* Table / dataframe */
+    /* Table / dataframe — Datara: dark premium surface, header, rows, separators */
     [data-testid="stDataFrame"] {
-        border: 1px solid var(--border-dim) !important;
+        border: 1px solid var(--border-medium) !important;
         border-radius: var(--radius-lg) !important;
         background: var(--bg-panel) !important;
         overflow: hidden !important;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.2) !important;
+    }
+    [data-testid="stDataFrame"] table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-family: var(--font-sans) !important;
+    }
+    [data-testid="stDataFrame"] thead tr {
+        background: var(--bg-surface) !important;
+        border-bottom: 1px solid var(--border-medium) !important;
+    }
+    [data-testid="stDataFrame"] thead th {
+        color: var(--text-muted) !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        padding: 12px 16px !important;
+        text-align: left !important;
+        border: none !important;
+    }
+    [data-testid="stDataFrame"] tbody tr {
+        border-bottom: 1px solid var(--border-dim) !important;
+        transition: background 0.15s ease !important;
+    }
+    [data-testid="stDataFrame"] tbody tr:hover {
+        background: rgba(245, 240, 255, 0.04) !important;
+    }
+    [data-testid="stDataFrame"] tbody tr:nth-child(even) {
+        background: rgba(0, 0, 0, 0.08) !important;
+    }
+    [data-testid="stDataFrame"] tbody tr:nth-child(even):hover {
+        background: rgba(245, 240, 255, 0.05) !important;
+    }
+    [data-testid="stDataFrame"] tbody td {
+        color: var(--text-secondary) !important;
+        font-size: 14px !important;
+        padding: 10px 16px !important;
+        border: none !important;
+    }
+
+    /* Chart container — Datara panel so chart sits in same design system */
+    [data-testid="stPlotlyChart"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-dim) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 20px !important;
+        overflow: hidden !important;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.02) !important;
+    }
+    [data-testid="stPlotlyChart"] > div {
+        border-radius: var(--radius-md) !important;
     }
 
     /* Alerts */
@@ -737,6 +819,14 @@ def apply_css():
     [data-testid="stDownloadButton"] button:hover {
         background: rgba(245, 240, 255, 0.15) !important;
         border-color: var(--border-bright) !important;
+    }
+
+    /* Tab content — consistent vertical rhythm */
+    [data-testid="stTabs"] [data-testid="stVerticalBlock"] {
+        padding-top: 20px !important;
+    }
+    [data-testid="stTabs"] [data-testid="stVerticalBlock"] > [data-testid="stVerticalBlock"] {
+        margin-top: 16px !important;
     }
 
     /* In-theme upload prompt — matches panel/cards, no default Streamlit info look */

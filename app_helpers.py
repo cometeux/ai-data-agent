@@ -144,13 +144,27 @@ def render_chart_fig(df, chart, is_dark):
         return None
     if is_dark:
         fig.update_layout(
-            paper_bgcolor="rgba(18,18,22,0.35)",
-            plot_bgcolor="rgba(18,18,22,0.15)",
-            font=dict(color="#F3F4F6", size=12),
+            paper_bgcolor="#120e1d",
+            plot_bgcolor="#1c162b",
+            font=dict(family="Inter, sans-serif", color="#F5F0FF", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
-            xaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)"),
-            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", zerolinecolor="rgba(255,255,255,0.06)")
+            xaxis=dict(
+                gridcolor="rgba(245, 240, 255, 0.06)",
+                zerolinecolor="rgba(245, 240, 255, 0.08)",
+                tickfont=dict(color="#c4b5e0", size=11),
+                title_font=dict(color="#c4b5e0", size=12),
+            ),
+            yaxis=dict(
+                gridcolor="rgba(245, 240, 255, 0.06)",
+                zerolinecolor="rgba(245, 240, 255, 0.08)",
+                tickfont=dict(color="#c4b5e0", size=11),
+                title_font=dict(color="#c4b5e0", size=12),
+            ),
+            colorway=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"],
+            legend=dict(bgcolor="rgba(18, 14, 29, 0.6)", font=dict(color="#c4b5e0", size=11), bordercolor="rgba(245, 240, 255, 0.1)"),
         )
+        if chart_type == "pie":
+            fig.update_traces(marker=dict(colors=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"]))
     else:
         fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0.6)",
