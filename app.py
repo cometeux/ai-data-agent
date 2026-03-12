@@ -524,27 +524,215 @@ def render_chart_fig(df, chart, is_dark):
 
 
 # -----------------------------
-# Minimal stable UI — Datara-style dark theme (restrained)
+# Datara UI — design-system fidelity (Inter, JetBrains Mono, #0a0812, #a78bfa)
 # -----------------------------
 def apply_css():
     st.markdown("""
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+    :root {
+        --bg-base: #0a0812;
+        --bg-panel: #120e1d;
+        --bg-surface: #1c162b;
+        --border-dim: rgba(245, 240, 255, 0.05);
+        --border-medium: rgba(245, 240, 255, 0.1);
+        --border-bright: rgba(245, 240, 255, 0.2);
+        --accent-primary: #a78bfa;
+        --accent-glow: #8b5cf6;
+        --text-primary: #F5F0FF;
+        --text-secondary: #c4b5e0;
+        --text-muted: #807a9e;
+        --font-sans: 'Inter', -apple-system, sans-serif;
+        --font-mono: 'JetBrains Mono', monospace;
+        --radius-sm: 12px;
+        --radius-md: 18px;
+        --radius-lg: 24px;
+    }
+    * { box-sizing: border-box; }
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
-    .block-container { max-width: 900px; padding: 1rem 1.25rem 1.5rem; }
-    [data-testid="stAppViewContainer"] { background: #101012 !important; }
-    .stApp .main .block-container { color: #A0A0AA; }
-    .stApp h1 { color: #FFFFFF !important; }
-    .stApp h2, .stApp h3 { color: #A0A0AA !important; }
-    .stApp [data-testid="stMetric"] { background: #1A1A1E; padding: 0.6rem 0.8rem; border-radius: 12px; border: 1px solid #2A2A30; }
-    .stApp [data-testid="stMetric"] label { color: #A0A0AA !important; }
-    .stApp [data-testid="stMetricValue"] { color: #FFFFFF !important; }
-    .stButton > button { background: #855CFF !important; color: #FFFFFF !important; border: none !important; border-radius: 999px; font-weight: 600; }
-    .stButton > button:hover { background: #734AFA !important; }
-    [data-testid="stFileUploader"] section { border-color: #2A2A30 !important; border-radius: 12px; }
-    .stExpander { background: #1A1A1E; border: 1px solid #2A2A30; border-radius: 12px; }
-    [data-testid="stTabs"] [aria-selected="true"] { background: rgba(133, 92, 255, 0.15) !important; color: #FFFFFF !important; }
+
+    [data-testid="stAppViewContainer"] {
+        background: var(--bg-base) !important;
+        background-image: radial-gradient(ellipse at 50% 30%, #1c1432 0%, #0a0812 70%) !important;
+    }
+    .block-container { max-width: 1200px; padding: 0 32px 64px; }
+    .stApp, .stApp .main { background: transparent !important; }
+    .stApp .main .block-container { color: var(--text-secondary); font-family: var(--font-sans); }
+
+    .stApp h1 {
+        font-family: var(--font-sans); font-size: 28px !important; font-weight: 600 !important;
+        color: var(--text-primary) !important; letter-spacing: -0.5px; margin-bottom: 8px !important;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .stApp [data-testid="stMarkdown"] p { color: var(--text-secondary) !important; font-size: 15px; }
+    .stApp .stCaption { color: var(--text-muted) !important; font-size: 13px !important; }
+    .stApp h2, .stApp h3 {
+        font-family: var(--font-sans); font-size: 15px !important; font-weight: 500 !important;
+        color: var(--text-secondary) !important;
+    }
+
+    /* Upload zone — design: panel, inset shadow, radius-lg */
+    [data-testid="stFileUploader"] { margin: 0.5rem 0 !important; }
+    [data-testid="stFileUploader"] section {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-medium) !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.3) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 32px !important;
+    }
+    [data-testid="stFileUploader"] section:hover {
+        border-color: var(--accent-primary) !important;
+        background: var(--bg-surface) !important;
+    }
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] {
+        font-size: 15px !important; font-weight: 500 !important; color: var(--text-primary) !important;
+    }
+    [data-testid="stFileUploader"] [data-testid="stFileUploaderDropzoneInstructions"] + span {
+        font-size: 13px !important; color: var(--text-muted) !important;
+    }
+
+    /* KPI cards — design: 24px padding, 32px value, 14px label */
+    [data-testid="stMetric"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-dim) !important;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.05) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 24px !important;
+        gap: 12px;
+    }
+    [data-testid="stMetric"] label {
+        font-size: 14px !important; font-weight: 500 !important;
+        color: var(--text-muted) !important;
+    }
+    [data-testid="stMetricValue"] {
+        font-family: var(--font-sans) !important;
+        font-size: 32px !important; font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        letter-spacing: -1px;
+    }
+    /* Missing Values (3rd KPI) — accent in design */
+    [data-testid="stMetric"]:nth-of-type(3) [data-testid="stMetricValue"] {
+        color: var(--accent-primary) !important;
+    }
+
+    /* Primary button — design: pill, #120e1d text, glow */
+    .stButton > button {
+        font-family: var(--font-sans) !important;
+        background: var(--accent-primary) !important;
+        color: #120e1d !important;
+        border: none !important;
+        border-radius: 999px !important;
+        font-size: 15px !important; font-weight: 600 !important;
+        padding: 16px !important;
+        width: 100%; max-width: 360px;
+        box-shadow: 0 4px 20px rgba(167, 139, 250, 0.3) !important;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+    }
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 25px rgba(167, 139, 250, 0.4) !important;
+    }
+
+    /* Expander — design: summary 14px muted, content padding */
+    .stExpander {
+        background: transparent !important;
+        border: none !important;
+    }
+    .streamlit-expanderHeader {
+        background: transparent !important;
+        font-size: 14px !important; color: var(--text-muted) !important;
+        padding: 12px 0 !important;
+    }
+    .streamlit-expanderContent {
+        border-top: 1px solid var(--border-dim) !important;
+        color: var(--text-muted) !important; font-size: 14px !important;
+    }
+
+    /* Tabs — design: underline list, active = accent underline */
+    [data-testid="stTabs"] { margin-top: 16px; }
+    [data-testid="stTabs"] [role="tablist"] {
+        border-bottom: 1px solid var(--border-dim) !important;
+        gap: 32px !important;
+    }
+    [data-testid="stTabs"] [role="tab"] {
+        font-family: var(--font-sans) !important;
+        padding: 12px 0 !important;
+        color: var(--text-muted) !important;
+        font-size: 15px !important; font-weight: 500 !important;
+        background: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        border-bottom: 2px solid transparent !important;
+        margin-bottom: -1px !important;
+    }
+    [data-testid="stTabs"] [aria-selected="true"] {
+        color: var(--text-primary) !important;
+        border-bottom-color: var(--accent-primary) !important;
+        box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Table / dataframe */
+    [data-testid="stDataFrame"] {
+        border: 1px solid var(--border-dim) !important;
+        border-radius: var(--radius-lg) !important;
+        background: var(--bg-panel) !important;
+        overflow: hidden !important;
+    }
+
+    /* Alerts */
+    [data-testid="stAlert"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-medium) !important;
+        border-radius: var(--radius-lg) !important;
+    }
+    [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
+
+    /* Chat — Ask AI */
+    [data-testid="stChatMessage"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-dim) !important;
+        border-radius: var(--radius-lg) !important;
+        color: var(--text-secondary) !important;
+    }
+    [data-testid="stChatInput"] {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--border-medium) !important;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2) !important;
+        border-radius: 999px !important;
+    }
+    [data-testid="stChatInput"] textarea { color: var(--text-primary) !important; }
+
+    /* Tab-inner buttons — pill secondary */
+    [data-testid="stTabs"] .stButton > button {
+        max-width: none; width: auto;
+        font-size: 12px !important; padding: 10px 16px !important;
+        background: var(--bg-panel) !important;
+        color: var(--text-muted) !important;
+        border: 1px solid var(--border-dim) !important;
+        border-radius: 999px !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    [data-testid="stTabs"] .stButton > button:hover {
+        border-color: var(--accent-primary) !important;
+        color: var(--text-primary) !important;
+    }
+
+    [data-testid="stDownloadButton"] button {
+        background: rgba(245, 240, 255, 0.08) !important;
+        color: var(--text-primary) !important;
+        border: 1px solid var(--border-medium) !important;
+        border-radius: 999px !important;
+        font-size: 13px !important;
+    }
+    [data-testid="stDownloadButton"] button:hover {
+        background: rgba(245, 240, 255, 0.15) !important;
+        border-color: var(--border-bright) !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -554,18 +742,16 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# 1. Header (Datara branding)
-st.title("Datara")
-st.caption("AI-Powered Data Workspace — Is your data usable? What matters? What's next?")
+# 1. Header (Datara branding) + Hero
+st.title("Is your data usable? What matters? What's next?")
+st.caption("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
 
-# 2. Upload Card
-with st.container():
-    st.subheader("Upload")
-    uploaded_file = st.file_uploader(
-        "Upload CSV or XLSX — drag & drop or browse",
-        type=["csv", "xlsx"],
-        key="main_uploader",
-    )
+# 2. Upload zone
+uploaded_file = st.file_uploader(
+    "Upload CSV or XLSX — drag & drop or browse",
+    type=["csv", "xlsx"],
+    key="main_uploader",
+)
 
 if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
