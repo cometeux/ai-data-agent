@@ -513,13 +513,24 @@ def inject_css(theme, lang):
 
 * {{ box-sizing: border-box; margin: 0; padding: 0; }}
 
+:root {{
+    --accent-purple: #9333EA;
+    --accent-indigo: #4F46E5;
+    --text-primary: {text_primary};
+    --text-secondary: {text_secondary};
+}}
+
+html {{ font-size: 16px; }}
 html, body, .stApp, [data-testid="stAppViewContainer"] {{
     font-family: {"'IBM Plex Sans Arabic', 'Inter', sans-serif" if lang == "ar" else "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"} !important;
     background-color: {bg_base} !important;
     color: {text_primary} !important;
-    line-height: {"1.6" if lang == "ar" else "1.5"};
+    line-height: 1.55 !important;
+    -webkit-font-smoothing: antialiased;
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
+[data-testid="stAppViewContainer"] {{ overflow-x: hidden !important; }}
+.block-container p, .block-container li {{ color: {text_primary} !important; line-height: 1.6 !important; }}
 
 /* App container: max-width, responsive padding, bottom space for fixed chat bar */
 .block-container {{
@@ -538,15 +549,14 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 40px;
+    padding: 14px 32px;
     background: {glass_panel};
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid {border_subtle};
-    margin-bottom: 0;
 }}
-.nav-logo {{ font-weight: 700; font-size: 1.1rem; color: {text_primary} !important; }}
-.nav-logo span {{ font-weight: 400; opacity: 0.5; margin-left: 8px; }}
+.nav-logo {{ font-weight: 600; font-size: 1.125rem; color: {text_primary} !important; letter-spacing: -0.02em; }}
+.nav-logo span {{ font-weight: 400; opacity: 0.6; margin-left: 6px; }}
 .nav-controls {{ display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }}
 @media (max-width: 768px) {{ .navbar {{ padding: 12px 16px; }} .nav-logo {{ font-size: 1rem; }} }}
 .nav-tag {{ padding: 4px 10px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; border-radius: 8px; font-size: 0.75rem; color: {text_secondary}; }}
@@ -594,66 +604,39 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .lang-dropdown {{ display: none; }}
 .lang-trigger {{ display: none; }}
 
-/* Design: star layers (body::before/after + star-layer-3/4) */
+/* Subtle background texture */
 .stApp::before {{
     content: "";
     position: fixed;
     inset: -100px;
     pointer-events: none;
     z-index: 0;
-    background-image: radial-gradient(0.5px 0.5px at 20px 30px, rgba(255,255,255,{"0.15" if is_dark else "0.08"}) 100%, transparent);
-    background-size: 80px 80px;
+    background-image: radial-gradient(1px 1px at 40px 60px, rgba(255,255,255,{"0.12" if is_dark else "0.06"}) 100%, transparent);
+    background-size: 120px 120px;
 }}
-.stApp::after {{
-    content: "";
-    position: fixed;
-    inset: -100px;
-    pointer-events: none;
-    z-index: 0;
-    background-image: radial-gradient(0.5px 0.5px at 50px 100px, rgba(255,255,255,{"0.25" if is_dark else "0.1"}) 100%, transparent);
-    background-size: 150px 150px;
-    transform: translateY(-20px);
-}}
-.star-layer-3 {{
-    position: fixed;
-    inset: -100px;
-    pointer-events: none;
-    z-index: 0;
-    background-image: radial-gradient(0.8px 0.8px at 120px 200px, rgba(255,255,255,{"0.4" if is_dark else "0.15"}) 100%, transparent);
-    background-size: 300px 300px;
-    transform: translateY(-40px);
-}}
-.star-layer-4 {{
-    position: fixed;
-    inset: -100px;
-    pointer-events: none;
-    z-index: 0;
-    background-image: radial-gradient(1px 1px at 250px 400px, rgba(255,255,255,{"0.6" if is_dark else "0.2"}) 100%, transparent);
-    background-size: 550px 550px;
-    transform: translateY(-60px);
-}}
+.star-layer-3, .star-layer-4 {{ display: none; }}
 [data-testid="stAppViewContainer"] {{ position: relative; z-index: 1; }}
 
-/* Variant: light flares */
+/* Soft ambient glow (dark mode only) */
 .light-flare-1 {{
     position: fixed;
-    top: -20vh; left: 50%;
+    top: -30vh; left: 50%;
     transform: translateX(-50%);
-    width: 70vw; height: 120vh;
-    background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.35) 0%, rgba(147, 51, 234, 0.15) 40%, transparent 70%);
+    width: 60vw; height: 80vh;
+    background: radial-gradient(ellipse at center, rgba(79, 70, 229, 0.12) 0%, transparent 60%);
     pointer-events: none;
     z-index: 0;
-    filter: blur(90px);
+    filter: blur(80px);
 }}
 .light-flare-2 {{
     position: fixed;
-    top: 20vh; left: 50%;
+    top: 40vh; left: 50%;
     transform: translateX(-50%);
-    width: 40vw; height: 60vh;
-    background: radial-gradient(ellipse at center, rgba(147, 51, 234, 0.2) 0%, transparent 70%);
+    width: 50vw; height: 40vh;
+    background: radial-gradient(ellipse at center, rgba(147, 51, 234, 0.08) 0%, transparent 65%);
     pointer-events: none;
     z-index: 0;
-    filter: blur(60px);
+    filter: blur(70px);
 }}
 
 /* Animations */
@@ -718,8 +701,9 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     background: radial-gradient(circle at 30% 30%, #ffffff 0%, #A855F7 40%, #4F46E5 100%);
     box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
 }}
-.hero h1 {{ font-size: 2rem; font-weight: 600; color: {text_primary} !important; }}
-.hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 1rem; max-width: 600px; line-height: 1.5; }}
+.hero h1 {{ font-size: 1.875rem; font-weight: 600; color: {text_primary} !important; margin: 0; letter-spacing: -0.02em; }}
+.hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 0.9375rem; max-width: 560px; line-height: 1.55; margin: 0; }}
+@media (max-width: 768px) {{ .hero h1 {{ font-size: 1.5rem; }} .hero-orb {{ width: 56px; height: 56px; }} .hero-desc {{ font-size: 0.875rem; }} }}
 
 /* Main content shell: responsive – 3-col only when enough width, else stack (no overflow) */
 .grid-main-marker + [data-testid="stHorizontalBlock"] {{
@@ -748,31 +732,32 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     }}
 }}
 
-/* Variant: section-title – readable title case, no broken wrap */
+/* Section titles – clear hierarchy, readable */
 .section-title {{
-    font-size: 0.8rem;
-    font-weight: 700;
-    margin-bottom: 20px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    margin-top: 0;
     color: {text_secondary} !important;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
 }}
 
-/* Variant: stats-row, kpi-card */
+/* Stats row & KPI cards – clean grid */
 .stats-row {{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
 }}
 .stats-row .kpi-card {{
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, {"0.04" if is_dark else "0.5"});
     border: 1px solid {border_subtle};
-    border-radius: 16px;
-    padding: 16px;
+    border-radius: 12px;
+    padding: 14px 16px;
 }}
-.stats-row .kpi-label {{ font-size: 0.75rem; color: {text_secondary}; }}
-.stats-row .kpi-value {{ font-size: 1.25rem; font-weight: 700; margin-top: 4px; }}
+.stats-row .kpi-label {{ font-size: 0.75rem; color: {text_secondary}; margin-bottom: 4px; }}
+.stats-row .kpi-value {{ font-size: 1.25rem; font-weight: 600; margin-top: 0; color: {text_primary} !important; }}
 
 /* Variant: health-score bar */
 .health-score {{
@@ -788,16 +773,16 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-radius: 4px;
 }}
 
-/* Variant: tag, tag-grid */
+/* Tags – compact, readable */
 .tag {{
-    padding: 4px 10px;
-    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, {"0.06" if is_dark else "0.08"});
     border: 1px solid {border_subtle};
     border-radius: 8px;
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     color: {text_secondary};
 }}
-.tag.highlight {{ border-color: #9333EA; color: {text_primary}; }}
+.tag.highlight {{ border-color: rgba(147, 51, 234, 0.4); color: {text_primary}; background: rgba(147, 51, 234, 0.08); }}
 .tag-grid {{ display: flex; flex-wrap: wrap; gap: 8px; }}
 
 /* Variant: insight-grid, insight-card – responsive */
@@ -809,14 +794,14 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 @media (max-width: 900px) {{ .insight-grid {{ grid-template-columns: 1fr; }} }}
 .insight-card {{
-    padding: 20px;
-    border-radius: 16px;
-    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: rgba(255,255,255,{"0.04" if is_dark else "0.6"});
     border: 1px solid {border_subtle};
 }}
 .insight-card.priority {{ border-left: 3px solid #9333EA; }}
-.insight-card .kpi-label {{ font-size: 0.7rem; margin-bottom: 8px; }}
-.insight-card .insight-text {{ font-size: 0.9rem; margin-top: 8px; color: {text_primary}; }}
+.insight-card .kpi-label {{ font-size: 0.7rem; margin-bottom: 6px; font-weight: 600; }}
+.insight-card div[style*="font-size: 0.9rem"] {{ font-size: 0.9375rem !important; line-height: 1.5 !important; color: {text_primary} !important; }}
 
 /* Variant: chart-area, chart-frame, chart-controls, explain-panel */
 .chart-area {{
@@ -838,23 +823,29 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     font-size: 0.8rem;
 }}
 .explain-panel {{
-    margin-top: 16px;
-    padding: 16px;
-    background: rgba(0,0,0,0.2);
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: rgba(79, 70, 229, {"0.08" if is_dark else "0.06"});
     border-radius: 12px;
-    font-size: 0.85rem;
-    border-left: 2px solid #4F46E5;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    border-left: 3px solid #4F46E5;
+    color: {text_primary} !important;
 }}
+.explain-panel strong {{ color: {text_primary} !important; margin-right: 6px; }}
 
-/* Variant: sidebar-list, history-item */
-.sidebar-list {{ display: flex; flex-direction: column; gap: 12px; }}
+/* Sidebar list & history items */
+.sidebar-list {{ display: flex; flex-direction: column; gap: 10px; }}
 .history-item {{
-    padding: 12px;
+    padding: 12px 14px;
     border-radius: 10px;
-    background: rgba(255,255,255,0.02);
+    background: rgba(255,255,255,{"0.03" if is_dark else "0.05"});
     border: 1px solid {border_subtle};
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: {text_primary} !important;
 }}
+.history-item div[style*="opacity"] {{ color: {text_secondary} !important; }}
 
 /* Variant: mode-selector, mode-btn */
 .mode-selector {{ display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 12px; margin-bottom: 20px; }}
@@ -870,30 +861,50 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-radius: 20px;
     font-size: 0.8rem;
 }}
+/* Right rail suggested-question buttons: style as chips (they render after suggested-chips div) */
+.grid-main-marker + [data-testid="stHorizontalBlock"] > div:last-child [data-testid="stButton"] button {{
+    padding: 8px 16px !important;
+    font-size: 0.8rem !important;
+    border-radius: 20px !important;
+    background: rgba(147, 51, 234, 0.1) !important;
+    border: 1px solid rgba(147, 51, 234, 0.2) !important;
+    color: {text_primary} !important;
+}}
+.grid-main-marker + [data-testid="stHorizontalBlock"] > div:last-child [data-testid="stButton"] button:hover {{
+    background: rgba(147, 51, 234, 0.2) !important;
+}}
 
 /* Variant: export-row, btn-ghost */
-.export-row {{ display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid {border_subtle}; }}
+.export-row {{ display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid {border_subtle}; margin-bottom: 0 !important; }}
+.export-row + [data-testid="stHorizontalBlock"] {{ margin-top: 8px !important; }}
 .btn-ghost {{ padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; color: {text_primary}; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }}
+/* Download buttons */
+.block-container [data-testid="stDownloadButton"] button {{
+    padding: 10px 20px !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,{"0.08" if is_dark else "0.12"}) !important;
+    border: 1px solid {border_subtle} !important;
+    color: {text_primary} !important;
+}}
+.block-container [data-testid="stDownloadButton"] button:hover {{
+    background: rgba(255,255,255,{"0.12" if is_dark else "0.18"}) !important;
+}}
 
-/* Glass panels */
-/* Design glass-panel */
+/* Glass panels – clean cards */
 .glass-panel {{
     background: {glass_panel};
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid {border_subtle};
-    border-top: 1px solid {border_highlight};
-    border-left: 1px solid {border_left_glass};
-    border-radius: 24px;
+    border-radius: 16px;
     box-shadow: {shadow_glass};
-    padding: 32px;
-    transition: all 0.3s ease;
+    padding: 24px;
     min-width: 0;
     overflow: hidden;
 }}
-.glass-panel:hover {{
-    transition: background 0.3s ease, border 0.3s ease;
-}}
+@media (max-width: 768px) {{ .glass-panel {{ padding: 18px !important; border-radius: 14px; }} }}
 
 
 /* Design dropzone */
@@ -924,7 +935,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .dropzone h3, .dropzone-outer h3 {{ font-weight: 500; margin-bottom: 8px; font-size: 1rem; }}
 .dropzone p, .dropzone-outer p {{ color: {text_secondary}; font-size: 0.9rem; }}
-/* Data Source: style the Streamlit block that CONTAINS the file uploader as the glass card (widget stays inside) */
+/* Data Source: style the block that contains BOTH title and file uploader (one card) */
 .block-container > div > [data-testid="stVerticalBlock"]:has([data-testid="stFileUploader"]) {{
     background: {glass_panel} !important;
     backdrop-filter: blur(32px);
@@ -932,14 +943,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border: 1px solid {border_subtle};
     border-radius: 24px;
     box-shadow: {shadow_glass};
-    padding: 32px !important;
+    padding: 28px 32px !important;
+    margin-bottom: 8px !important;
+}}
+.block-container > div > [data-testid="stVerticalBlock"]:has([data-testid="stFileUploader"]) .section-title {{
+    margin-top: 0 !important;
 }}
 [data-testid="stFileUploader"] {{
     background: transparent !important; border: none !important; padding: 0 !important;
     width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
 }}
-[data-testid="stFileUploader"] section {{ max-width: 100% !important; }}
+[data-testid="stFileUploader"] section {{ max-width: 100% !important; border: none !important; }}
 [data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-weight: 500 !important; }}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {{ border: 1px dashed {border_subtle} !important; border-radius: 16px !important; background: rgba(255,255,255,0.02) !important; }}
 
 /* Design dashboard-grid: balanced row, align top */
 .dashboard-grid {{ display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start; }}
@@ -1002,61 +1018,46 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     color: {text_primary} !important;
 }}
 
-/* Data Preview: fixed-height scrollable table so page doesn't grow too long */
+/* Table – readable, scannable */
 .table-scroll-viewport {{
     width: 100%;
-    max-height: 380px;
+    max-height: 360px;
     overflow: auto;
-    border-radius: 16px;
-    border: 1px solid {border_card};
-    background: transparent;
+    border-radius: 12px;
+    border: 1px solid {border_subtle};
 }}
-.table-container, .table-wrap {{
-    width: 100%;
-    overflow-x: auto;
-    border-radius: 16px;
-    border: 1px solid {border_card};
-    background: transparent;
-}}
-.table-scroll-viewport table, .table-container table, .table-wrap table {{ width: 100%; border-collapse: collapse; text-align: left; }}
-.table-scroll-viewport th {{ position: sticky; top: 0; z-index: 1; background: {th_bg} !important; }}
-.table-scroll-viewport th, .table-scroll-viewport td {{ padding: 12px 16px; font-size: 0.875rem; }}
-.table-container th, .table-wrap th {{
-    color: {text_secondary} !important;
-    font-weight: 500;
-    border-bottom: 1px solid {border_card};
+.table-scroll-viewport table {{ width: 100%; border-collapse: collapse; font-size: 0.875rem; }}
+.table-scroll-viewport th {{
+    position: sticky; top: 0; z-index: 1;
     background: {th_bg} !important;
-    padding: 16px 20px;
-    font-size: 0.9rem;
+    color: {text_secondary} !important;
+    font-weight: 600;
+    padding: 12px 14px;
+    border-bottom: 1px solid {border_subtle};
+    text-align: left;
 }}
-.table-container td, .table-wrap td {{
+.table-scroll-viewport td {{
+    padding: 10px 14px;
     border-bottom: 1px solid {td_border};
     color: {text_primary} !important;
-    padding: 16px 20px;
-    font-size: 0.9rem;
 }}
-.table-container tr:last-child td, .table-wrap tr:last-child td {{ border-bottom: none; }}
+.table-scroll-viewport tbody tr:hover td {{ background: rgba(255,255,255,{"0.03" if is_dark else "0.04"}) !important; }}
 
-/* Design cta-container, btn-primary */
-.cta-container {{ display: flex; justify-content: center; margin: 8px 0; }}
-.cta-container .stButton > button,
-.stButton > button[kind="primary"],
+/* Buttons – clear primary action */
+.cta-container {{ display: flex; justify-content: center; margin: 12px 0; }}
 .stButton > button {{
-    background: linear-gradient(90deg, #4F46E5, #9333EA) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    padding: 16px 40px !important;
-    font-size: 1.05rem !important;
+    background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
+    color: #fff !important;
+    border: none !important;
+    padding: 12px 24px !important;
+    font-size: 0.9375rem !important;
     font-weight: 500 !important;
-    border-radius: 16px !important;
-    box-shadow: 0 8px 32px rgba(147, 51, 234, 0.4) !important;
-    transition: all 0.3s ease !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 12px !important;
+    border-radius: 12px !important;
+    transition: opacity 0.2s, transform 0.15s !important;
 }}
 .stButton > button:hover {{
-    box-shadow: 0 12px 40px rgba(147, 51, 234, 0.6) !important;
+    opacity: 0.95;
+    transform: translateY(-1px);
 }}
 
 /* Design analysis-section */
@@ -1073,6 +1074,13 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     min-height: 320px;
 }}
 .chart-card-title {{ font-weight: 500; font-size: 0.95rem; color: {text_primary} !important; margin-bottom: 16px; }}
+/* Chart Studio: style the block that contains the Plotly chart so chart renders inside a card */
+[data-testid="stVerticalBlock"]:has(> [data-testid="stPlotlyChart"]) {{
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid {border_subtle};
+    border-radius: 16px;
+    padding: 24px !important;
+}}
 .chart-placeholder {{
     min-height: 260px;
     border-radius: 8px;
@@ -1089,49 +1097,33 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     .kpi-grid {{ grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }}
 }}
 
-/* ========== AI ASSISTANT SECTION: conversation + chips + command bar ========== */
+/* Chat section – readable messages */
 .chat-section-title {{
-    font-size: 0.85rem;
+    font-size: 0.8125rem;
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     color: {text_secondary} !important;
-    margin-bottom: 16px;
-    margin-top: 40px;
-}}
-
-/* Conversation area: message bubbles with clear hierarchy */
-.chat-conversation-wrap {{
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    margin-top: 32px;
 }}
 [data-testid="stChatMessage"] {{
     padding: 0 !important;
-    margin-bottom: 16px !important;
-    border: none !important;
+    margin-bottom: 12px !important;
     background: transparent !important;
 }}
 [data-testid="stChatMessage"] > div {{
     background: {glass_panel} !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border: 1px solid {border_subtle} !important;
-    border-radius: 16px !important;
-    padding: 16px 20px !important;
-    max-width: 85%;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border-radius: 14px !important;
+    padding: 14px 18px !important;
+    max-width: 88%;
 }}
-/* User messages: right-aligned, distinct tint (odd positions) */
 [data-testid="stChatMessage"]:nth-of-type(odd) > div {{
     margin-left: auto !important;
     margin-right: 0 !important;
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(147, 51, 234, 0.18)) !important;
-    border-color: rgba(147, 51, 234, 0.25) !important;
+    background: rgba(79, 70, 229, 0.12) !important;
+    border-color: rgba(147, 51, 234, 0.2) !important;
 }}
-/* Assistant messages: left-aligned glass card (even positions) */
-[data-testid="stChatMessage"]:nth-of-type(even) > div {{
-    margin-right: auto !important;
-    margin-left: 0 !important;
-}}
+[data-testid="stChatMessage"]:nth-of-type(even) > div {{ margin-right: auto !important; margin-left: 0 !important; }}
 [data-testid="stChatMessage"] p {{
     color: {text_primary} !important;
     font-size: 0.9375rem !important;
@@ -1139,12 +1131,12 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     margin: 0 !important;
 }}
 
-/* Suggested questions: lightweight chips (secondary to command bar) */
+/* Suggested questions label */
 .chat-suggested-label {{
     font-size: 0.8125rem;
     font-weight: 500;
     color: {text_secondary} !important;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }}
 /* Suggested chips only: innermost block that contains chat input (exclude CTA and other buttons) */
 .block-container [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"]):not([data-testid="stVerticalBlock"] [data-testid="stVerticalBlock"]:has([data-testid="stChatInput"])) [data-testid="stButton"] button {{
@@ -1164,68 +1156,51 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-color: {border_highlight} !important;
 }}
 
-/* Floating AI command bar: one integrated pill – input fills the bar, no inner box */
+/* Floating chat input – one clean bar */
 [data-testid="stChatInput"] {{
     position: fixed !important;
-    bottom: 24px !important;
+    bottom: 20px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    width: calc(100% - 32px) !important;
-    max-width: 720px !important;
+    width: min(100% - 24px, 640px) !important;
     margin: 0 !important;
-    background: linear-gradient(90deg, #5B42F3, #8B5CF6) !important;
+    background: linear-gradient(135deg, #5B42F3, #7C3AED) !important;
     border: none !important;
-    border-radius: 28px !important;
-    padding: 10px 20px 10px 20px !important;
-    min-height: 52px !important;
-    height: auto !important;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.35) !important;
+    border-radius: 24px !important;
+    padding: 12px 20px !important;
+    min-height: 50px !important;
+    box-shadow: 0 8px 32px rgba(91, 66, 243, 0.35) !important;
     display: flex !important;
     align-items: center !important;
     gap: 12px !important;
     z-index: 1000 !important;
 }}
-[data-testid="stChatInput"] > div {{
-    flex: 1 !important;
-    min-width: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
+[data-testid="stChatInput"] > div, [data-testid="stChatInput"] input {{
+    flex: 1 !important; min-width: 0 !important;
+    background: transparent !important; border: none !important;
 }}
 [data-testid="stChatInput"] input {{
-    flex: 1 !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    background: transparent !important;
-    border: none !important;
-    color: #fff !important;
-    font-size: 0.9rem !important;
-    outline: none !important;
-    padding: 8px 4px !important;
-}}
-[data-testid="stChatInput"] input::placeholder {{
-    color: rgba(255,255,255,0.85) !important;
-}}
-[data-testid="stChatInput"] button {{
-    flex-shrink: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    color: #fff !important;
+    color: #fff !important; font-size: 0.9375rem !important;
     padding: 6px 8px !important;
 }}
-@media (max-width: 768px) {{
-    [data-testid="stChatInput"] {{
-        width: calc(100% - 24px) !important;
-        max-width: none !important;
-        bottom: 16px !important;
-        padding: 10px 16px !important;
-    }}
-}}
+[data-testid="stChatInput"] input::placeholder {{ color: rgba(255,255,255,0.8) !important; }}
+[data-testid="stChatInput"] button {{ flex-shrink: 0 !important; background: transparent !important; border: none !important; color: #fff !important; }}
+@media (max-width: 768px) {{ [data-testid="stChatInput"] {{ bottom: 12px !important; padding: 10px 16px !important; }} }}
 
 .summary-block {{ margin-bottom: 20px; }}
 .summary-block h4 {{ font-size: 0.9375rem; font-weight: 600; color: {text_primary}; margin-bottom: 10px; }}
 .summary-block p, .summary-block ul {{ color: {text_secondary}; font-size: 0.9375rem; line-height: 1.6; }}
+
+/* Form widgets – readable, consistent */
+.stSelectbox > div > div {{
+    background: rgba(255,255,255,{"0.06" if is_dark else "0.1"}) !important;
+    border: 1px solid {border_subtle} !important;
+    color: {text_primary} !important;
+    border-radius: 10px !important;
+}}
+.stSelectbox label {{ color: {text_secondary} !important; font-size: 0.875rem !important; }}
+[data-testid="stRadio"] > div {{ gap: 10px !important; }}
+[data-testid="stRadio"] label {{ color: {text_primary} !important; font-size: 0.875rem !important; }}
 
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
