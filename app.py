@@ -527,11 +527,11 @@ def render_chart_fig(df, chart, is_dark):
 # Datara UI — design-system fidelity (Inter, JetBrains Mono, #0a0812, #a78bfa)
 # -----------------------------
 def apply_css():
-    st.markdown("""
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
+    # Single HTML block starting with < so Streamlit doesn't render as code
+    st.markdown("""<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
     :root {
         --bg-base: #0a0812;
         --bg-panel: #120e1d;
@@ -595,8 +595,9 @@ def apply_css():
         font-size: 13px !important; color: var(--text-muted) !important;
     }
 
-    /* KPI cards — design: 24px padding, 32px value, 14px label */
-    [data-testid="stMetric"] {
+    /* KPI cards — design: 24px padding, 32px value, 14px label; support metric-container and stMetric */
+    [data-testid="stMetric"],
+    [data-testid="metric-container"] {
         background: var(--bg-panel) !important;
         border: 1px solid var(--border-dim) !important;
         box-shadow: inset 0 1px 2px rgba(255,255,255,0.05) !important;
@@ -604,9 +605,12 @@ def apply_css():
         padding: 24px !important;
         gap: 12px;
     }
-    [data-testid="stMetric"] label {
+    [data-testid="stMetric"] label,
+    [data-testid="stMetricLabel"],
+    [data-testid="metric-container"] label {
         font-size: 14px !important; font-weight: 500 !important;
         color: var(--text-muted) !important;
+        display: block !important;
     }
     [data-testid="stMetricValue"] {
         font-family: var(--font-sans) !important;
@@ -615,7 +619,8 @@ def apply_css():
         letter-spacing: -1px;
     }
     /* Missing Values (3rd KPI) — accent in design */
-    [data-testid="stMetric"]:nth-of-type(3) [data-testid="stMetricValue"] {
+    [data-testid="stMetric"]:nth-of-type(3) [data-testid="stMetricValue"],
+    [data-testid="metric-container"]:nth-of-type(3) [data-testid="stMetricValue"] {
         color: var(--accent-primary) !important;
     }
 
@@ -733,6 +738,7 @@ def apply_css():
         background: rgba(245, 240, 255, 0.15) !important;
         border-color: var(--border-bright) !important;
     }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -809,7 +815,7 @@ if st.button("Generate Executive Summary", key="cta_gen"):
 if profile.get("readiness_factors"):
     with st.expander("What affects the readiness score?"):
         for f in profile["readiness_factors"]:
-            st.write("-", f)
+            st.write("-", str(f) if f is not None else "—")
 
 # 4. Main Tabbed Workspace
 tab_overview, tab_health, tab_findings, tab_charts, tab_ai = st.tabs([
@@ -911,7 +917,7 @@ with tab_health:
 
 with tab_findings:
     if result is None:
-        st.info("Generate summary above to see findings.")
+        st.caption("Generate summary above to see findings.")
     else:
         summary = result.get("summary") or {}
         cards = [
@@ -921,16 +927,14 @@ with tab_findings:
             ("Recommended Next Step", summary.get("recommended_next_step")),
         ]
         for label, value in cards:
-            if value:
-                st.write(f"**{label}**")
-                st.info(value) if label == "Biggest Risk" else st.success(value) if label in ("Biggest Opportunity", "Recommended Next Step") else st.write(value)
-            else:
-                st.write(f"**{label}**")
-                st.caption("—")
+            text = (value if isinstance(value, str) and value.strip() else "") or "—"
+            with st.container():
+                st.markdown(f"**{label}**")
+                st.markdown(text)
 
 with tab_charts:
     if result is None:
-        st.info("Generate summary above to see charts.")
+        st.caption("Generate summary above to see charts.")
     else:
         charts = (result.get("charts") or [])[:2]
         if not charts:
