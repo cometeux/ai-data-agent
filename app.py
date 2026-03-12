@@ -7,7 +7,7 @@ import plotly.express as px
 from openai import OpenAI
 
 st.set_page_config(
-    page_title="Data Analysis AI Agent",
+    page_title="Datara - AI-Powered Data Workspace",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -524,7 +524,7 @@ def render_chart_fig(df, chart, is_dark):
 
 
 # -----------------------------
-# Minimal stable UI (no fragile CSS)
+# Minimal stable UI — Datara-style dark theme (restrained)
 # -----------------------------
 def apply_css():
     st.markdown("""
@@ -533,6 +533,18 @@ def apply_css():
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
     .block-container { max-width: 900px; padding: 1rem 1.25rem 1.5rem; }
+    [data-testid="stAppViewContainer"] { background: #101012 !important; }
+    .stApp .main .block-container { color: #A0A0AA; }
+    .stApp h1 { color: #FFFFFF !important; }
+    .stApp h2, .stApp h3 { color: #A0A0AA !important; }
+    .stApp [data-testid="stMetric"] { background: #1A1A1E; padding: 0.6rem 0.8rem; border-radius: 12px; border: 1px solid #2A2A30; }
+    .stApp [data-testid="stMetric"] label { color: #A0A0AA !important; }
+    .stApp [data-testid="stMetricValue"] { color: #FFFFFF !important; }
+    .stButton > button { background: #855CFF !important; color: #FFFFFF !important; border: none !important; border-radius: 999px; font-weight: 600; }
+    .stButton > button:hover { background: #734AFA !important; }
+    [data-testid="stFileUploader"] section { border-color: #2A2A30 !important; border-radius: 12px; }
+    .stExpander { background: #1A1A1E; border: 1px solid #2A2A30; border-radius: 12px; }
+    [data-testid="stTabs"] [aria-selected="true"] { background: rgba(133, 92, 255, 0.15) !important; color: #FFFFFF !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -542,15 +554,15 @@ def apply_css():
 # -----------------------------
 apply_css()
 
-# 1. Header
-st.title("AI Data Review Workspace")
-st.caption("Quick answers: Is this dataset usable? What's wrong? What matters? What should I investigate next?")
+# 1. Header (Datara branding)
+st.title("Datara")
+st.caption("AI-Powered Data Workspace — Is your data usable? What matters? What's next?")
 
 # 2. Upload Card
 with st.container():
     st.subheader("Upload")
     uploaded_file = st.file_uploader(
-        "Upload a CSV or Excel file",
+        "Upload CSV or XLSX — drag & drop or browse",
         type=["csv", "xlsx"],
         key="main_uploader",
     )
@@ -558,7 +570,7 @@ with st.container():
 if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
         reset_app_state()
-    st.info("Upload a dataset to get a readiness score, data health checks, top findings, and AI Q&A.")
+    st.info("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
     st.stop()
 
 if st.session_state.last_uploaded_name != uploaded_file.name:
@@ -593,23 +605,23 @@ if st.session_state.suggested_questions is None:
 # 3. KPI Strip
 k1, k2, k3, k4, k5 = st.columns(5)
 with k1:
-    st.metric("Rows", f"{n_rows:,}")
+    st.metric("Total Rows", f"{n_rows:,}")
 with k2:
-    st.metric("Columns", n_cols)
+    st.metric("Total Columns", n_cols)
 with k3:
-    st.metric("Missing", profile["missing_total"])
+    st.metric("Missing Values", profile["missing_total"])
 with k4:
     st.metric("Duplicates", profile["duplicate_rows"])
 with k5:
-    st.metric("Readiness", f"{profile['readiness_pct']}%")
+    st.metric("Readiness %", f"{profile['readiness_pct']}%")
 
 # Generate summary + readiness expander
-if st.button("Generate summary", key="cta_gen"):
+if st.button("Generate Executive Summary", key="cta_gen"):
     with st.spinner("Analyzing..."):
         st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
     st.rerun()
 if profile.get("readiness_factors"):
-    with st.expander("What affects the readiness score"):
+    with st.expander("What affects the readiness score?"):
         for f in profile["readiness_factors"]:
             st.write("-", f)
 
@@ -777,7 +789,7 @@ with tab_ai:
     for msg in st.session_state.chat_history:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-    user_question = st.chat_input("Ask about this dataset")
+    user_question = st.chat_input("Ask anything about your data...")
     if user_question:
         st.session_state.chat_history.append({"role": "user", "content": user_question})
         with st.chat_message("assistant"):
