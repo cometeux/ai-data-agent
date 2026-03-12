@@ -1023,6 +1023,52 @@ def apply_css():
         text-align: left !important;
     }
 
+    /* Suggested questions — muted, premium chips with lamp icon and subtle icon motion */
+    .block-container > *:has(.datara-suggested-caption) + * .stButton > button {
+        font-family: var(--font-sans) !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: var(--text-muted) !important;
+        background: rgba(100, 80, 120, 0.25) !important;
+        border: 1px solid rgba(212, 171, 254, 0.15) !important;
+        border-radius: var(--radius-lg) !important;
+        padding: 12px 16px 12px 40px !important;
+        box-shadow: none !important;
+        transition: background 0.2s ease, border-color 0.2s ease !important;
+        min-height: 44px;
+        display: inline-flex !important;
+        align-items: center !important;
+        text-align: left !important;
+        position: relative !important;
+    }
+    .block-container > *:has(.datara-suggested-caption) + * .stButton > button:hover {
+        background: rgba(100, 80, 120, 0.35) !important;
+        border-color: rgba(212, 171, 254, 0.25) !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+    /* Lamp / idea icon (left of text), subtle vertical float on icon only */
+    .block-container > *:has(.datara-suggested-caption) + * .stButton > button::before {
+        content: "";
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        margin-top: -8px;
+        width: 16px;
+        height: 16px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238b7a9e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 22h4M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0018 8 6 6 0 006 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 018.91 14'/%3E%3C/svg%3E") center / contain no-repeat;
+        animation: datara-chip-icon-float 4s ease-in-out infinite;
+    }
+    @keyframes datara-chip-icon-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-2px); }
+    }
+    .datara-suggested-caption {
+        font-size: 13px !important;
+        color: var(--text-muted) !important;
+        margin-bottom: 10px !important;
+    }
+
     /* Tab-inner buttons — pill secondary */
     [data-testid="stTabs"] .stButton > button {
         max-width: none; width: auto;
@@ -1536,7 +1582,7 @@ with tab_charts:
 # 5. Universal AI Assistant — always visible below tabs (core workspace feature)
 st.markdown('<hr class="datara-ai-section" />', unsafe_allow_html=True)
 st.subheader("Ask AI")
-st.caption("Suggested questions (from this dataset):")
+st.markdown('<p class="datara-suggested-caption">Suggested questions (from this dataset):</p>', unsafe_allow_html=True)
 suggested_qs = st.session_state.suggested_questions or []
 if suggested_qs:
     cols = st.columns(3)
