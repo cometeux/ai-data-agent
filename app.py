@@ -1033,26 +1033,34 @@ def apply_css():
         color: #161121 !important;
     }
 
-    /* Ask AI — message icons: muted lilac/plum, subtle border, no red/warm */
+    /* Ask AI — message icons: Datara system style only (no red/warm/alert) */
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"],
-    [data-testid="stChatMessage"] > div > div:first-child {
-        background: var(--bg-surface) !important;
-        border: 1px solid var(--border-dim) !important;
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] > div,
+    [data-testid="stChatMessage"] > div > div:first-child,
+    [data-testid="stChatMessage"] > div > div:first-child > div {
+        background: #251c35 !important;
+        background-color: #251c35 !important;
+        border: 1px solid rgba(212, 171, 254, 0.12) !important;
         border-radius: var(--radius-sm) !important;
-        color: var(--text-muted) !important;
+        color: #8b7a9e !important;
+        box-shadow: none !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] *,
+    [data-testid="stChatMessage"] > div > div:first-child * {
+        color: #8b7a9e !important;
     }
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img,
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] svg,
     [data-testid="stChatMessage"] > div > div:first-child img,
     [data-testid="stChatMessage"] > div > div:first-child svg {
-        filter: brightness(1.05) saturate(0.7) !important;
+        filter: brightness(1.1) saturate(0.6) hue-rotate(-10deg) !important;
     }
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] path,
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] circle,
     [data-testid="stChatMessage"] > div > div:first-child path,
     [data-testid="stChatMessage"] > div > div:first-child circle {
-        fill: var(--text-muted) !important;
-        stroke: var(--text-muted) !important;
+        fill: #8b7a9e !important;
+        stroke: #8b7a9e !important;
     }
 
     /* Tab-inner buttons — pill secondary */
