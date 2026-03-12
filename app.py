@@ -937,14 +937,33 @@ def apply_css():
     }
     [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
 
-    /* Chat — Ask AI: Datara theme, no red/orange avatar clash */
+    /* Chat — Ask AI: full-width assistant panel, not narrow bubble */
     [data-testid="stChatMessage"] {
         background: var(--bg-panel) !important;
         border: 1px solid var(--border-dim) !important;
         border-radius: var(--radius-lg) !important;
         color: var(--text-secondary) !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 16px !important;
+        padding: 20px 24px !important;
     }
-    /* Avatar/icon container: muted dark panel or soft purple, never default orange/red */
+    [data-testid="stChatMessage"] > div {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    [data-testid="stChatMessage"] > div > div:last-child,
+    [data-testid="stChatMessage"] > div:last-child {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: 100% !important;
+    }
+    [data-testid="stChatMessage"] [data-testid="stVerticalBlock"] {
+        width: 100% !important;
+        max-width: none !important;
+    }
+    /* Avatar/icon container: muted dark panel or soft purple */
     [data-testid="stChatMessage"] > div:first-child,
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
         background: var(--bg-surface) !important;
@@ -1037,7 +1056,8 @@ def apply_css():
     }
     [data-testid="stChatMessage"] [data-testid="stMarkdown"],
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p {
-        max-width: 65ch !important;
+        max-width: none !important;
+        width: 100% !important;
         line-height: 1.6 !important;
     }
     [data-testid="stChatMessage"] [data-testid="stMarkdown"] p { margin-bottom: 0.75em !important; }
@@ -1087,14 +1107,21 @@ def apply_css():
     .datara-finding-value br { margin: 0.5em 0; }
 
     /* Chat response — scrollable body + copy action */
-    .datara-chat-response { margin-top: 4px; }
+    .datara-chat-response {
+        margin-top: 8px;
+        width: 100%;
+        max-width: 100%;
+        padding-right: 4px;
+    }
     .datara-chat-body {
         max-height: 50vh;
         overflow-y: auto;
         font-size: 15px;
         line-height: 1.6;
         color: var(--text-secondary);
-        padding-right: 8px;
+        padding: 4px 12px 4px 0;
+        width: 100%;
+        max-width: 100%;
     }
     .datara-chat-body br { margin: 0.4em 0; }
     .datara-copy-btn {
