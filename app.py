@@ -504,8 +504,8 @@ def render_chart_fig(df, chart, is_dark):
         return None
     if is_dark:
         fig.update_layout(
-            paper_bgcolor="#120e1d",
-            plot_bgcolor="#1c162b",
+            paper_bgcolor="#161121",
+            plot_bgcolor="#221b32",
             font=dict(family="Inter, sans-serif", color="#F5F0FF", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(
@@ -520,11 +520,11 @@ def render_chart_fig(df, chart, is_dark):
                 tickfont=dict(color="#c4b5e0", size=11),
                 title_font=dict(color="#c4b5e0", size=12),
             ),
-            colorway=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"],
+            colorway=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"],
             legend=dict(bgcolor="rgba(18, 14, 29, 0.6)", font=dict(color="#c4b5e0", size=11), bordercolor="rgba(245, 240, 255, 0.1)"),
         )
         if chart_type == "pie":
-            fig.update_traces(marker=dict(colors=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"]))
+            fig.update_traces(marker=dict(colors=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"]))
     else:
         fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0.6)",
@@ -558,17 +558,18 @@ def apply_css():
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
     :root {
-        --bg-base: #0a0812;
-        --bg-panel: #120e1d;
-        --bg-surface: #1c162b;
-        --border-dim: rgba(245, 240, 255, 0.05);
-        --border-medium: rgba(245, 240, 255, 0.1);
-        --border-bright: rgba(245, 240, 255, 0.2);
-        --accent-primary: #a78bfa;
-        --accent-glow: #8b5cf6;
-        --text-primary: #F5F0FF;
-        --text-secondary: #c4b5e0;
-        --text-muted: #807a9e;
+        --bg-base: #06040a;
+        --bg-panel: #161121;
+        --bg-surface: #221b32;
+        --border-dim: rgba(255, 255, 255, 0.04);
+        --border-medium: rgba(255, 255, 255, 0.06);
+        --border-bright: rgba(255, 255, 255, 0.08);
+        --accent-primary: #D4ABFE;
+        --accent-secondary: #a78bfa;
+        --accent-glow: #a78bfa;
+        --text-primary: #ffffff;
+        --text-secondary: #9B92AB;
+        --text-muted: #6e6580;
         --font-sans: 'Inter', -apple-system, sans-serif;
         --font-mono: 'JetBrains Mono', monospace;
         --radius-sm: 12px;
@@ -580,9 +581,53 @@ def apply_css():
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
 
+    /* === Streamlit theme overrides: no default red/blue, Datara accent only === */
+    input:focus, input:focus-visible, textarea:focus, textarea:focus-visible,
+    [data-testid="stChatInput"] textarea:focus,
+    [data-testid="stChatInput"] textarea:focus-visible,
+    [data-testid="stFileUploader"]:focus-within,
+    .stButton > button:focus, .stButton > button:focus-visible,
+    [data-testid="stNumberInput"] input:focus,
+    [data-testid="stTextInput"] input:focus,
+    [data-testid="stTextInput"] input:focus-visible,
+    select:focus, [data-baseweb="select"]:focus-within {
+        outline: none !important;
+        border-color: var(--accent-primary) !important;
+        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px rgba(212, 171, 254, 0.12) !important;
+    }
+    .stButton > button:focus, .stButton > button:focus-visible {
+        box-shadow: 0 4px 20px rgba(212, 171, 254, 0.35), 0 0 0 2px rgba(212, 171, 254, 0.2) !important;
+    }
+    [data-testid="stProgress"] > div,
+    [data-testid="stProgress"] [role="progressbar"],
+    div[data-testid="stProgress"] > div > div,
+    [data-testid="stProgress"] div[style*="width"] {
+        background: var(--accent-primary) !important;
+        background-color: var(--accent-primary) !important;
+    }
+    [data-testid="stProgress"] {
+        background: var(--bg-surface) !important;
+        border-radius: var(--radius-sm) !important;
+    }
+    [data-testid="stFileUploader"] [role="progressbar"],
+    [data-testid="stFileUploader"] progress,
+    [data-testid="stFileUploader"] [data-testid="stProgress"] > div > div,
+    [data-testid="stFileUploader"] [data-testid="stProgress"] div[style*="width"] {
+        background: var(--accent-secondary) !important;
+        background-color: var(--accent-secondary) !important;
+    }
+    [data-testid="stFileUploader"] [data-testid="stProgress"],
+    [data-testid="stFileUploader"] [data-testid="stProgress"] > div {
+        background: var(--bg-surface) !important;
+    }
+    [data-testid="stChatInput"]:focus-within {
+        border-color: var(--accent-primary) !important;
+        box-shadow: 0 0 0 1px var(--accent-primary), 0 0 0 3px rgba(212, 171, 254, 0.1) !important;
+    }
+
     [data-testid="stAppViewContainer"] {
         background: var(--bg-base) !important;
-        background-image: radial-gradient(ellipse at 50% 30%, #1c1432 0%, #0a0812 70%) !important;
+        background-image: radial-gradient(ellipse at 50% 30%, #221b32 0%, #06040a 70%) !important;
     }
     .block-container { max-width: 1200px; padding: 48px 32px 64px; }
     .stApp, .stApp .main { background: transparent !important; }
@@ -649,22 +694,22 @@ def apply_css():
         color: var(--accent-primary) !important;
     }
 
-    /* Primary button — design: pill, #120e1d text, glow */
+    /* Primary button — Datara accent, dark text, no red focus */
     .stButton > button {
         font-family: var(--font-sans) !important;
         background: var(--accent-primary) !important;
-        color: #120e1d !important;
+        color: #161121 !important;
         border: none !important;
         border-radius: 999px !important;
         font-size: 15px !important; font-weight: 600 !important;
         padding: 16px !important;
         width: 100%; max-width: 360px;
-        box-shadow: 0 4px 20px rgba(167, 139, 250, 0.3) !important;
+        box-shadow: 0 4px 20px rgba(212, 171, 254, 0.3) !important;
         transition: transform 0.2s, box-shadow 0.2s !important;
     }
     .stButton > button:hover {
         transform: translateY(-1px);
-        box-shadow: 0 8px 25px rgba(167, 139, 250, 0.4) !important;
+        box-shadow: 0 8px 25px rgba(212, 171, 254, 0.4) !important;
     }
 
     /* Expander — Datara: same panel language, subtle border */
@@ -716,15 +761,15 @@ def apply_css():
     [data-testid="stTabs"] [role="tab"]:hover {
         color: var(--text-secondary) !important;
     }
-    /* Active tab: Datara accent only — remove Streamlit default red/coral completely */
+    /* Active tab: Datara accent only — no default red/coral */
     [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
-        background: #a78bfa !important;
-        background-color: #a78bfa !important;
+        background: var(--accent-primary) !important;
+        background-color: var(--accent-primary) !important;
     }
     [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
         color: var(--text-primary) !important;
-        border-bottom: 2px solid #a78bfa !important;
-        border-bottom-color: #a78bfa !important;
+        border-bottom: 2px solid var(--accent-primary) !important;
+        border-bottom-color: var(--accent-primary) !important;
         outline: none !important;
         box-shadow: none !important;
         background: transparent !important;
@@ -826,11 +871,11 @@ def apply_css():
     [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img {
         filter: brightness(1.1) contrast(0.95) !important;
     }
-    /* Assistant icon: soft purple accent so it feels part of the product */
+    /* Assistant icon: soft Datara accent */
     [data-testid="stChatMessage"][data-role="assistant"] > div:first-child,
     [data-testid="stChatMessage"][data-role="assistant"] [data-testid="stChatMessageAvatar"] {
-        background: rgba(167, 139, 250, 0.2) !important;
-        border: 1px solid rgba(167, 139, 250, 0.25) !important;
+        background: rgba(212, 171, 254, 0.2) !important;
+        border: 1px solid rgba(212, 171, 254, 0.25) !important;
     }
     [data-testid="stChatInput"] {
         background: var(--bg-panel) !important;

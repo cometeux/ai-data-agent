@@ -144,8 +144,8 @@ def render_chart_fig(df, chart, is_dark):
         return None
     if is_dark:
         fig.update_layout(
-            paper_bgcolor="#120e1d",
-            plot_bgcolor="#1c162b",
+            paper_bgcolor="#161121",
+            plot_bgcolor="#221b32",
             font=dict(family="Inter, sans-serif", color="#F5F0FF", size=12),
             margin=dict(l=24, r=24, t=12, b=24),
             xaxis=dict(
@@ -160,11 +160,11 @@ def render_chart_fig(df, chart, is_dark):
                 tickfont=dict(color="#c4b5e0", size=11),
                 title_font=dict(color="#c4b5e0", size=12),
             ),
-            colorway=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"],
+            colorway=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"],
             legend=dict(bgcolor="rgba(18, 14, 29, 0.6)", font=dict(color="#c4b5e0", size=11), bordercolor="rgba(245, 240, 255, 0.1)"),
         )
         if chart_type == "pie":
-            fig.update_traces(marker=dict(colors=["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"]))
+            fig.update_traces(marker=dict(colors=["#D4ABFE", "#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9"]))
     else:
         fig.update_layout(
             paper_bgcolor="rgba(255,255,255,0.6)",
