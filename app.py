@@ -704,10 +704,28 @@ def apply_css():
     [data-testid="stTabs"] [role="tab"]:hover {
         color: var(--text-secondary) !important;
     }
-    [data-testid="stTabs"] [aria-selected="true"] {
+    /* Active tab: Datara accent only — remove Streamlit default red/coral completely */
+    [data-testid="stTabs"] [data-baseweb="tab-highlight"] {
+        background: #a78bfa !important;
+        background-color: #a78bfa !important;
+    }
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
         color: var(--text-primary) !important;
-        border-bottom-color: var(--accent-primary) !important;
+        border-bottom: 2px solid #a78bfa !important;
+        border-bottom-color: #a78bfa !important;
+        outline: none !important;
         box-shadow: none !important;
+        background: transparent !important;
+    }
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"]::before,
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"]::after {
+        display: none !important;
+        background: transparent !important;
+        border: none !important;
+    }
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] span,
+    [data-testid="stTabs"] [role="tab"][aria-selected="true"] div {
+        color: var(--text-primary) !important;
     }
 
     /* Table / dataframe — Datara: dark premium surface, header, rows, separators */
