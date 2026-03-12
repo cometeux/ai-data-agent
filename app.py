@@ -520,17 +520,16 @@ def inject_css(theme, lang):
     --text-secondary: {text_secondary};
 }}
 
-html {{ font-size: 16px; }}
-html, body, .stApp, [data-testid="stAppViewContainer"] {{
+html {{ font-size: 16px; -webkit-font-smoothing: antialiased; }}
+body, .stApp, [data-testid="stAppViewContainer"] {{
     font-family: {"'IBM Plex Sans Arabic', 'Inter', sans-serif" if lang == "ar" else "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"} !important;
-    background-color: {bg_base} !important;
+    background: {bg_base} !important;
     color: {text_primary} !important;
-    line-height: 1.55 !important;
-    -webkit-font-smoothing: antialiased;
+    line-height: 1.5 !important;
 }}
 [data-testid="stAppViewContainer"] > section {{ background: transparent !important; }}
 [data-testid="stAppViewContainer"] {{ overflow-x: hidden !important; }}
-.block-container p, .block-container li {{ color: {text_primary} !important; line-height: 1.6 !important; }}
+.block-container p, .block-container li {{ color: {text_primary} !important; font-size: 0.9375rem !important; line-height: 1.55 !important; }}
 
 /* App container: max-width, responsive padding, bottom space for fixed chat bar */
 .block-container {{
@@ -702,8 +701,8 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
 }}
 .hero h1 {{ font-size: 1.875rem; font-weight: 600; color: {text_primary} !important; margin: 0; letter-spacing: -0.02em; }}
-.hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 0.9375rem; max-width: 560px; line-height: 1.55; margin: 0; }}
-@media (max-width: 768px) {{ .hero h1 {{ font-size: 1.5rem; }} .hero-orb {{ width: 56px; height: 56px; }} .hero-desc {{ font-size: 0.875rem; }} }}
+.hero-desc, .hero p {{ color: {text_secondary} !important; font-size: 0.9rem; max-width: 520px; line-height: 1.5; margin: 0; }}
+@media (max-width: 768px) {{ .hero h1 {{ font-size: 1.375rem; }} .hero-orb {{ width: 52px; height: 52px; }} .hero-desc {{ font-size: 0.8125rem; }} }}
 
 /* Main content shell: responsive – 3-col only when enough width, else stack (no overflow) */
 .grid-main-marker + [data-testid="stHorizontalBlock"] {{
@@ -732,15 +731,13 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     }}
 }}
 
-/* Section titles – clear hierarchy, readable */
+/* Section titles */
 .section-title {{
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    margin-bottom: 16px;
-    margin-top: 0;
+    margin: 0 0 14px 0;
     color: {text_secondary} !important;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
+    letter-spacing: 0.03em;
 }}
 
 /* Stats row & KPI cards – clean grid */
@@ -757,19 +754,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     padding: 14px 16px;
 }}
 .stats-row .kpi-label {{ font-size: 0.75rem; color: {text_secondary}; margin-bottom: 4px; }}
-.stats-row .kpi-value {{ font-size: 1.25rem; font-weight: 600; margin-top: 0; color: {text_primary} !important; }}
+.stats-row .kpi-value {{ font-size: 1.2rem; font-weight: 600; margin-top: 0; color: {text_primary} !important; }}
 
-/* Variant: health-score bar */
+/* Health score bar */
 .health-score {{
-    height: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    height: 6px;
+    background: rgba(255, 255, 255, {"0.12" if is_dark else "0.2"});
     border-radius: 4px;
-    margin: 12px 0;
+    margin: 10px 0;
     overflow: hidden;
 }}
 .health-fill {{
     height: 100%;
-    background: linear-gradient(90deg, #10B981, #34D399);
+    background: linear-gradient(90deg, #059669, #10B981);
     border-radius: 4px;
 }}
 
@@ -801,7 +798,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .insight-card.priority {{ border-left: 3px solid #9333EA; }}
 .insight-card .kpi-label {{ font-size: 0.7rem; margin-bottom: 6px; font-weight: 600; }}
-.insight-card div[style*="font-size: 0.9rem"] {{ font-size: 0.9375rem !important; line-height: 1.5 !important; color: {text_primary} !important; }}
+.insight-card div[style*="margin-top: 8px"] {{ font-size: 0.9rem !important; line-height: 1.5 !important; color: {text_primary} !important; }}
 
 /* Variant: chart-area, chart-frame, chart-controls, explain-panel */
 .chart-area {{
@@ -861,13 +858,13 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     border-radius: 20px;
     font-size: 0.8rem;
 }}
-/* Right rail suggested-question buttons: style as chips (they render after suggested-chips div) */
+/* Right rail suggested-question buttons as chips */
 .grid-main-marker + [data-testid="stHorizontalBlock"] > div:last-child [data-testid="stButton"] button {{
-    padding: 8px 16px !important;
-    font-size: 0.8rem !important;
-    border-radius: 20px !important;
-    background: rgba(147, 51, 234, 0.1) !important;
-    border: 1px solid rgba(147, 51, 234, 0.2) !important;
+    padding: 8px 14px !important;
+    font-size: 0.8125rem !important;
+    border-radius: 999px !important;
+    background: rgba(147, 51, 234, 0.12) !important;
+    border: 1px solid rgba(147, 51, 234, 0.25) !important;
     color: {text_primary} !important;
 }}
 .grid-main-marker + [data-testid="stHorizontalBlock"] > div:last-child [data-testid="stButton"] button:hover {{
@@ -876,7 +873,7 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 
 /* Variant: export-row, btn-ghost */
 .export-row {{ display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid {border_subtle}; margin-bottom: 0 !important; }}
-.export-row + [data-testid="stHorizontalBlock"] {{ margin-top: 8px !important; }}
+.export-row + [data-testid="stHorizontalBlock"] {{ margin-top: 6px !important; }}
 .btn-ghost {{ padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid {border_subtle}; color: {text_primary}; border-radius: 10px; font-size: 0.85rem; cursor: pointer; }}
 /* Download buttons */
 .block-container [data-testid="stDownloadButton"] button {{
@@ -935,27 +932,27 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 }}
 .dropzone h3, .dropzone-outer h3 {{ font-weight: 500; margin-bottom: 8px; font-size: 1rem; }}
 .dropzone p, .dropzone-outer p {{ color: {text_secondary}; font-size: 0.9rem; }}
-/* Data Source: style the block that contains BOTH title and file uploader (one card) */
+/* Data Source card – same as other panels */
 .block-container > div > [data-testid="stVerticalBlock"]:has([data-testid="stFileUploader"]) {{
     background: {glass_panel} !important;
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid {border_subtle};
-    border-radius: 24px;
+    border-radius: 16px;
     box-shadow: {shadow_glass};
-    padding: 28px 32px !important;
-    margin-bottom: 8px !important;
-}}
-.block-container > div > [data-testid="stVerticalBlock"]:has([data-testid="stFileUploader"]) .section-title {{
-    margin-top: 0 !important;
+    padding: 24px !important;
+    margin-bottom: 16px !important;
 }}
 [data-testid="stFileUploader"] {{
     background: transparent !important; border: none !important; padding: 0 !important;
     width: 100% !important; max-width: 100% !important; box-sizing: border-box !important;
 }}
 [data-testid="stFileUploader"] section {{ max-width: 100% !important; border: none !important; }}
-[data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-weight: 500 !important; }}
-[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {{ border: 1px dashed {border_subtle} !important; border-radius: 16px !important; background: rgba(255,255,255,0.02) !important; }}
+[data-testid="stFileUploader"] label {{ color: {text_primary} !important; font-size: 0.9rem !important; font-weight: 500 !important; }}
+[data-testid="stFileUploader"] [data-testid="stFileUploaderDropzone"] {{
+    border: 1px dashed {border_subtle} !important; border-radius: 12px !important;
+    background: rgba(255,255,255,{"0.03" if is_dark else "0.05"}) !important;
+}}
 
 /* Design dashboard-grid: balanced row, align top */
 .dashboard-grid {{ display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start; }}
@@ -1040,25 +1037,22 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
     padding: 10px 14px;
     border-bottom: 1px solid {td_border};
     color: {text_primary} !important;
+    font-size: 0.8125rem !important;
 }}
-.table-scroll-viewport tbody tr:hover td {{ background: rgba(255,255,255,{"0.03" if is_dark else "0.04"}) !important; }}
+.table-scroll-viewport tbody tr:hover td {{ background: rgba(255,255,255,{"0.03" if is_dark else "0.05"}) !important; }}
 
-/* Buttons – clear primary action */
-.cta-container {{ display: flex; justify-content: center; margin: 12px 0; }}
+/* Buttons */
+.cta-container {{ display: flex; justify-content: center; margin: 16px 0; }}
 .stButton > button {{
     background: linear-gradient(135deg, #4F46E5, #7C3AED) !important;
     color: #fff !important;
     border: none !important;
-    padding: 12px 24px !important;
-    font-size: 0.9375rem !important;
+    padding: 10px 22px !important;
+    font-size: 0.9rem !important;
     font-weight: 500 !important;
-    border-radius: 12px !important;
-    transition: opacity 0.2s, transform 0.15s !important;
+    border-radius: 10px !important;
 }}
-.stButton > button:hover {{
-    opacity: 0.95;
-    transform: translateY(-1px);
-}}
+.stButton > button:hover {{ opacity: 0.92 !important; }}
 
 /* Design analysis-section */
 .analysis-section {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }}
@@ -1191,16 +1185,19 @@ html, body, .stApp, [data-testid="stAppViewContainer"] {{
 .summary-block h4 {{ font-size: 0.9375rem; font-weight: 600; color: {text_primary}; margin-bottom: 10px; }}
 .summary-block p, .summary-block ul {{ color: {text_secondary}; font-size: 0.9375rem; line-height: 1.6; }}
 
-/* Form widgets – readable, consistent */
+/* All form widgets – readable */
 .stSelectbox > div > div {{
     background: rgba(255,255,255,{"0.06" if is_dark else "0.1"}) !important;
     border: 1px solid {border_subtle} !important;
     color: {text_primary} !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
+    font-size: 0.875rem !important;
 }}
-.stSelectbox label {{ color: {text_secondary} !important; font-size: 0.875rem !important; }}
-[data-testid="stRadio"] > div {{ gap: 10px !important; }}
+.stSelectbox label {{ color: {text_secondary} !important; font-size: 0.8125rem !important; }}
+[data-testid="stRadio"] > div {{ gap: 8px !important; }}
 [data-testid="stRadio"] label {{ color: {text_primary} !important; font-size: 0.875rem !important; }}
+/* Ensure all Streamlit text is readable */
+[data-testid="stMarkdown"] p, [data-testid="stMarkdown"] li {{ color: {text_primary} !important; font-size: 0.9375rem !important; line-height: 1.55 !important; }}
 
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
