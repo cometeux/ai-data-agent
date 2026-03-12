@@ -8,7 +8,7 @@ from openai import OpenAI
 
 st.set_page_config(
     page_title="Datara - AI-Powered Data Workspace",
-    page_icon="📊",
+    page_icon="🫆",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -778,12 +778,29 @@ def apply_css():
     }
     [data-testid="stAlert"] [data-testid="stMarkdown"] { color: var(--text-secondary) !important; }
 
-    /* Chat — Ask AI */
+    /* Chat — Ask AI: Datara theme, no red/orange avatar clash */
     [data-testid="stChatMessage"] {
         background: var(--bg-panel) !important;
         border: 1px solid var(--border-dim) !important;
         border-radius: var(--radius-lg) !important;
         color: var(--text-secondary) !important;
+    }
+    /* Avatar/icon container: muted dark panel or soft purple, never default orange/red */
+    [data-testid="stChatMessage"] > div:first-child,
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
+        background: var(--bg-surface) !important;
+        border-radius: var(--radius-sm) !important;
+        color: var(--text-muted) !important;
+    }
+    [data-testid="stChatMessage"] > div:first-child img,
+    [data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] img {
+        filter: brightness(1.1) contrast(0.95) !important;
+    }
+    /* Assistant icon: soft purple accent so it feels part of the product */
+    [data-testid="stChatMessage"][data-role="assistant"] > div:first-child,
+    [data-testid="stChatMessage"][data-role="assistant"] [data-testid="stChatMessageAvatar"] {
+        background: rgba(167, 139, 250, 0.2) !important;
+        border: 1px solid rgba(167, 139, 250, 0.25) !important;
     }
     [data-testid="stChatInput"] {
         background: var(--bg-panel) !important;
@@ -792,6 +809,15 @@ def apply_css():
         border-radius: 999px !important;
     }
     [data-testid="stChatInput"] textarea { color: var(--text-primary) !important; }
+
+    /* Universal AI assistant section — separator and heading */
+    .datara-ai-section {
+        margin: 32px 0 0 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        border-top: 1px solid var(--border-dim) !important;
+    }
+    .stApp h2 { font-family: var(--font-sans) !important; font-size: 18px !important; font-weight: 600 !important; color: var(--text-primary) !important; }
 
     /* Tab-inner buttons — pill secondary */
     [data-testid="stTabs"] .stButton > button {
@@ -923,13 +949,12 @@ if profile.get("readiness_factors"):
         for f in profile["readiness_factors"]:
             st.write("-", str(f) if f is not None else "—")
 
-# 4. Main Tabbed Workspace
-tab_overview, tab_health, tab_findings, tab_charts, tab_ai = st.tabs([
+# 4. Main Tabbed Workspace (Overview, Health, Findings, Charts only)
+tab_overview, tab_health, tab_findings, tab_charts = st.tabs([
     "Overview",
     "Data Health",
     "Top Findings",
     "Charts",
-    "Ask AI",
 ])
 
 with tab_overview:
@@ -1064,32 +1089,34 @@ with tab_charts:
                     else:
                         st.caption("Click *Explain this chart* for a short explanation.")
 
-with tab_ai:
-    suggested_qs = st.session_state.suggested_questions or []
-    st.caption("Suggested questions (from this dataset):")
-    if suggested_qs:
-        cols = st.columns(3)
-        for i, q in enumerate(suggested_qs):
-            with cols[i % 3]:
-                if st.button(q[:60] + ("…" if len(q) > 60 else ""), key=f"sug_{i}"):
-                    st.session_state.pending_question = q
-                    st.rerun()
-    if st.session_state.pending_question:
-        q = st.session_state.pending_question
-        st.session_state.pending_question = None
-        st.session_state.chat_history.append({"role": "user", "content": q})
-        with st.spinner("..."):
-            answer = ask_agent_question(df, result or {}, q, profile)
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-        st.rerun()
-    for msg in st.session_state.chat_history:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-    user_question = st.chat_input("Ask anything about your data...")
-    if user_question:
-        st.session_state.chat_history.append({"role": "user", "content": user_question})
-        with st.chat_message("assistant"):
-            answer = ask_agent_question(df, result or {}, user_question, profile)
-            st.write(answer)
-        st.session_state.chat_history.append({"role": "assistant", "content": answer})
-        st.rerun()
+# 5. Universal AI Assistant — always visible below tabs (core workspace feature)
+st.markdown('<hr class="datara-ai-section" />', unsafe_allow_html=True)
+st.subheader("Ask AI")
+st.caption("Suggested questions (from this dataset):")
+suggested_qs = st.session_state.suggested_questions or []
+if suggested_qs:
+    cols = st.columns(3)
+    for i, q in enumerate(suggested_qs):
+        with cols[i % 3]:
+            if st.button(q[:60] + ("…" if len(q) > 60 else ""), key=f"sug_{i}"):
+                st.session_state.pending_question = q
+                st.rerun()
+if st.session_state.pending_question:
+    q = st.session_state.pending_question
+    st.session_state.pending_question = None
+    st.session_state.chat_history.append({"role": "user", "content": q})
+    with st.spinner("..."):
+        answer = ask_agent_question(df, result or {}, q, profile)
+    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+    st.rerun()
+for msg in st.session_state.chat_history:
+    with st.chat_message(msg["role"]):
+        st.write(msg["content"])
+user_question = st.chat_input("Ask anything about your data...")
+if user_question:
+    st.session_state.chat_history.append({"role": "user", "content": user_question})
+    with st.chat_message("assistant"):
+        answer = ask_agent_question(df, result or {}, user_question, profile)
+        st.write(answer)
+    st.session_state.chat_history.append({"role": "assistant", "content": answer})
+    st.rerun()
