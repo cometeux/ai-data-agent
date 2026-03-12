@@ -287,37 +287,63 @@ Answer clearly and directly based only on the uploaded data and existing analysi
 
 
 # -----------------------------
-# Minimal UI – hide sidebar/menu, constrain width
+# Dashboard UI – compact three-rail layout, accents
 # -----------------------------
-def apply_minimal_css():
+def apply_dashboard_css():
     st.markdown("""
     <style>
     #MainMenu { visibility: hidden; }
     footer { visibility: hidden; }
     [data-testid="stSidebar"] { display: none !important; }
-    .block-container { max-width: 900px; padding-top: 2rem; padding-bottom: 3rem; }
+    .block-container { max-width: 1400px; padding: 1rem 1.25rem 1.5rem; }
+    [data-testid="stVerticalBlock"] > div { gap: 0.5rem; }
+    /* Compact header */
+    h1 { font-size: 1.35rem !important; margin-bottom: 0.15rem !important; }
+    [data-testid="stMarkdown"] p { margin-bottom: 0.25rem !important; font-size: 0.875rem !important; }
+    /* Accent: primary buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+        color: #fff !important; border: none !important;
+        font-weight: 600 !important; border-radius: 8px !important;
+        box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+    }
+    .stButton > button:hover { box-shadow: 0 4px 12px rgba(139, 92, 246, 0.45); filter: brightness(1.05); }
+    /* Metric cards: compact, subtle border */
+    [data-testid="stMetric"] { padding: 0.5rem 0.75rem; background: rgba(30, 27, 75, 0.4); border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.15); }
+    [data-testid="stMetric"] label { color: #a5b4fc !important; font-size: 0.75rem !important; }
+    [data-testid="stMetric"] [data-testid="stMetricValue"] { color: #e0e7ff !important; font-size: 1.1rem !important; }
+    /* Expanders: tighter */
+    .streamlit-expanderHeader { padding: 0.4rem 0.6rem !important; font-size: 0.9rem !important; }
+    .streamlit-expanderContent { padding: 0.5rem 0.75rem !important; }
+    /* Chat messages */
+    [data-testid="stChatMessage"] { padding: 0.5rem 0.75rem !important; }
+    /* Suggested question chips: accent when possible */
+    div[data-testid="column"] button { border-radius: 6px !important; }
+    /* Dark base for dashboard feel */
+    [data-testid="stAppViewContainer"] { background: linear-gradient(180deg, #0f0f14 0%, #12121a 100%) !important; }
+    .stPlotlyChart { border-radius: 8px; overflow: hidden; border: 1px solid rgba(139, 92, 246, 0.12); }
+    /* Keep upload/input areas readable on dark */
+    [data-testid="stFileUploader"] { border-radius: 8px; }
+    [data-testid="stChatInput"] textarea { border-radius: 8px; border: 1px solid rgba(139, 92, 246, 0.25); }
     </style>
     """, unsafe_allow_html=True)
 
 
-# (inject_css removed; apply_minimal_css used below)
-
-
 # -----------------------------
-# Render
+# Render – dashboard layout
 # -----------------------------
-apply_minimal_css()
+apply_dashboard_css()
 
+# Compact top line: title + badge
+st.markdown(f'<p style="margin:0; font-size:0.8rem; color:#818cf8;">{t("badge")}</p>', unsafe_allow_html=True)
 st.title(t("app_title"))
-st.caption(t("badge"))
-st.divider()
 
-# --- Upload ---
-st.subheader(t("data_source"))
+# --- Upload (full width so we can branch before rails) ---
 uploaded_file = st.file_uploader(
     t("drag_drop") + " — " + t("supports"),
     type=["csv", "xlsx"],
-    key="main_uploader"
+    key="main_uploader",
+    label_visibility="collapsed"
 )
 
 if uploaded_file is None:
@@ -340,118 +366,110 @@ except Exception as e:
 profile = profile_dataframe(df)
 size_mb = file_size_mb(uploaded_file)
 n_rows, n_cols = df.shape
-
-# --- Dataset overview ---
-st.subheader(t("dataset_overview"))
-r1, r2, r3, r4 = st.columns(4)
-with r1:
-    st.metric(t("total_rows"), f"{n_rows:,}")
-with r2:
-    st.metric(t("total_columns"), n_cols)
-with r3:
-    st.metric(t("duplicates"), profile["duplicate_rows"])
-with r4:
-    st.metric(t("missing_vals"), profile["missing_total"])
-st.caption(f"{uploaded_file.name} · {size_mb:.2f} MB")
-st.divider()
-
-# --- Generate summary ---
-if st.button(t("generate_summary_short"), key="cta_gen"):
-    with st.spinner(t("analyzing")):
-        st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
-    st.rerun()
-
 result = st.session_state.analysis_result
 
-# --- Analysis summary ---
-if result is not None:
-    st.subheader(t("analysis_summary"))
-    summary = result.get("summary") or {}
-    with st.expander(t("overview"), expanded=True):
-        st.write(summary.get("overview") or "—")
-    with st.expander(t("key_insights")):
-        for item in summary.get("key_insights") or []:
-            st.write(f"- {item}")
-    with st.expander(t("recommendations")):
-        for item in summary.get("recommendations") or []:
-            st.write(f"- {item}")
-    with st.expander(t("final_summary")):
-        st.write(summary.get("final_summary") or summary.get("overview") or "—")
+# ----- Three-rail dashboard -----
+left_rail, center_rail, right_rail = st.columns([1, 2.6, 1])
 
-    # --- Charts from analysis ---
-    charts = result.get("charts") or []
-    if charts:
-        st.subheader(t("visualizations"))
-        for i, ch in enumerate(charts):
-            fig = render_chart_fig(df, ch, is_dark=(st.session_state.get("theme", "light") == "dark"))
-            if fig is not None:
-                st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
-            else:
-                st.caption(t("chart_not_available"))
-
-st.divider()
-
-# --- Data preview (fixed-height, scrollable) ---
-st.subheader(t("data_preview"))
-st.dataframe(df.head(100), height=350, use_container_width=True)
-
-# --- Export ---
-st.subheader("Export")
-ex1, ex2, _ = st.columns(3)
-with ex1:
+# --- LEFT: Upload context, actions, export ---
+with left_rail:
+    st.caption(t("data_source"))
+    st.caption(f"**{uploaded_file.name}** · {size_mb:.2f} MB")
+    if st.button(t("generate_summary_short"), key="cta_gen", use_container_width=True):
+        with st.spinner(t("analyzing")):
+            st.session_state.analysis_result = ask_agent_for_analysis(df, profile)
+        st.rerun()
+    st.caption("Export")
     st.download_button(
         t("export_csv"),
         df.to_csv(index=False).encode("utf-8"),
         file_name=uploaded_file.name or "data.csv",
         mime="text/csv",
-        key="dl_csv"
+        key="dl_csv",
+        use_container_width=True
     )
-with ex2:
     rep = (result.get("summary", {}) if result else {}) or {}
     rep_text = (
-        "# Executive Report\n\n"
-        + (rep.get("overview") or "")
-        + "\n\n## Key insights\n"
-        + "\n".join(f"- {x}" for x in (rep.get("key_insights") or []))
+        "# Executive Report\n\n" + (rep.get("overview") or "")
+        + "\n\n## Key insights\n" + "\n".join(f"- {x}" for x in (rep.get("key_insights") or []))
     )
     st.download_button(
         t("gen_report"),
         rep_text.encode("utf-8"),
         file_name="executive_report.md",
         mime="text/markdown",
-        key="dl_report"
+        key="dl_report",
+        use_container_width=True
     )
 
-st.divider()
+# --- CENTER: Metrics, summary, charts, preview ---
+with center_rail:
+    st.caption(t("dataset_overview"))
+    r1, r2, r3, r4 = st.columns(4)
+    with r1:
+        st.metric(t("total_rows"), f"{n_rows:,}")
+    with r2:
+        st.metric(t("total_columns"), n_cols)
+    with r3:
+        st.metric(t("duplicates"), profile["duplicate_rows"])
+    with r4:
+        st.metric(t("missing_vals"), profile["missing_total"])
 
-# --- AI assistant ---
-st.subheader(t("ask_questions"))
+    if result is not None:
+        st.caption(t("analysis_summary"))
+        summary = result.get("summary") or {}
+        with st.expander(t("overview"), expanded=True):
+            st.write(summary.get("overview") or "—")
+        with st.expander(t("key_insights")):
+            for item in summary.get("key_insights") or []:
+                st.write(f"- {item}")
+        with st.expander(t("recommendations")):
+            for item in summary.get("recommendations") or []:
+                st.write(f"- {item}")
+        with st.expander(t("final_summary")):
+            st.write(summary.get("final_summary") or summary.get("overview") or "—")
 
-if st.session_state.pending_question:
-    q = st.session_state.pending_question
-    st.session_state.pending_question = None
-    st.session_state.chat_history.append({"role": "user", "content": q})
-    with st.spinner("..."):
-        answer = ask_agent_question(df, result or {}, q)
-    st.session_state.chat_history.append({"role": "assistant", "content": answer})
-    st.rerun()
+        charts = result.get("charts") or []
+        if charts:
+            st.caption(t("visualizations"))
+            for i, ch in enumerate(charts):
+                fig = render_chart_fig(df, ch, is_dark=(st.session_state.get("theme", "light") == "dark"))
+                if fig is not None:
+                    st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
+                else:
+                    st.caption(t("chart_not_available"))
 
-for msg in st.session_state.chat_history:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+    st.caption(t("data_preview"))
+    st.dataframe(df.head(100), height=280, use_container_width=True)
 
-st.caption(t("suggested_questions"))
-suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
-for i, q in enumerate(suggested_qs):
-    if st.button(q, key=f"sug_{i}"):
-        st.session_state.pending_question = q
+# --- RIGHT: AI assistant, suggested Qs, chat ---
+with right_rail:
+    st.caption(t("ask_questions"))
+    if st.session_state.pending_question:
+        q = st.session_state.pending_question
+        st.session_state.pending_question = None
+        st.session_state.chat_history.append({"role": "user", "content": q})
+        with st.spinner("..."):
+            answer = ask_agent_question(df, result or {}, q)
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
         st.rerun()
 
-user_question = st.chat_input(t("ask_ai_placeholder"))
-if user_question:
-    st.session_state.chat_history.append({"role": "user", "content": user_question})
-    with st.chat_message("assistant"):
-        answer = ask_agent_question(df, result or {}, user_question)
-        st.write(answer)
-    st.session_state.chat_history.append({"role": "assistant", "content": answer})
-    st.rerun()
+    st.caption(t("suggested_questions"))
+    suggested_qs = [t("q_top_revenue"), t("q_region_growth"), t("q_trends"), t("q_anomalies"), t("q_recommend")]
+    for i, q in enumerate(suggested_qs):
+        if st.button(q, key=f"sug_{i}", use_container_width=True):
+            st.session_state.pending_question = q
+            st.rerun()
+
+    for msg in st.session_state.chat_history:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])
+
+    user_question = st.chat_input(t("ask_ai_placeholder"))
+    if user_question:
+        st.session_state.chat_history.append({"role": "user", "content": user_question})
+        with st.chat_message("assistant"):
+            answer = ask_agent_question(df, result or {}, user_question)
+            st.write(answer)
+        st.session_state.chat_history.append({"role": "assistant", "content": answer})
+        st.rerun()
