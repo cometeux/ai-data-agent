@@ -7,7 +7,7 @@ import plotly.express as px
 from openai import OpenAI
 
 st.set_page_config(
-    page_title="Datara - AI-Powered Data Workspace",
+    page_title="Datara",
     page_icon="🫆",
     layout="wide",
     initial_sidebar_state="collapsed"
