@@ -559,7 +559,7 @@ def apply_css():
         background: var(--bg-base) !important;
         background-image: radial-gradient(ellipse at 50% 30%, #1c1432 0%, #0a0812 70%) !important;
     }
-    .block-container { max-width: 1200px; padding: 0 32px 64px; }
+    .block-container { max-width: 1200px; padding: 48px 32px 64px; }
     .stApp, .stApp .main { background: transparent !important; }
     .stApp .main .block-container { color: var(--text-secondary); font-family: var(--font-sans); }
 
@@ -739,6 +739,19 @@ def apply_css():
         border-color: var(--border-bright) !important;
     }
 
+    /* In-theme upload prompt — matches panel/cards, no default Streamlit info look */
+    .datara-upload-prompt {
+        font-family: var(--font-sans);
+        font-size: 14px;
+        color: var(--text-muted);
+        background: var(--bg-panel);
+        border: 1px solid var(--border-dim);
+        border-radius: var(--radius-lg);
+        padding: 20px 24px;
+        margin: 16px 0 0 0;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.03);
+    }
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -762,7 +775,10 @@ uploaded_file = st.file_uploader(
 if uploaded_file is None:
     if st.session_state.last_uploaded_name is not None:
         reset_app_state()
-    st.info("Upload your dataset to generate an instant executive summary and deep-dive analysis.")
+    st.markdown(
+        '<p class="datara-upload-prompt">Upload your dataset to generate an instant executive summary and deep-dive analysis.</p>',
+        unsafe_allow_html=True,
+    )
     st.stop()
 
 if st.session_state.last_uploaded_name != uploaded_file.name:
